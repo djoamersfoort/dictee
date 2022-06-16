@@ -1,0 +1,125 @@
+body {
+    margin: 0;
+    font-family: Segoe UI, sans-serif;
+}
+#topbar {
+    background-color: #593196;
+    height: 100px;
+}
+#topbar img {
+    height: 80px;
+    margin: 10px;
+}
+#topbar b {
+    color: white;
+    position: relative;
+    bottom: 43px;
+    left: 20px;
+    font-size: 20px;
+}
+#topbar a {
+    float: right;
+    margin: 35px;
+    font-size: 19px;
+    text-decoration: none;
+    color: #A991D4;
+}
+#mainhead, footer {
+    background-color: #F9F8FC;
+    padding: 30px;
+}
+#mainhead h1, #mainhead h2, #dictee h1 {
+    font-weight: normal;
+    text-align: center;
+}
+#mainhead h1, #dictee h1 {
+    font-size: 3em;
+}
+#mainhead h2 {
+    font-size: 1.5em;
+}
+a, a:visited {
+    color: #593196;
+}
+
+#dictee {
+    width: 50%;
+    margin: auto;
+}
+#dictee h3 {
+    font-weight: normal;
+}
+#dictee li a, #dictee h3 a {
+    margin-left: 20px;
+    padding: 0 8px;
+}
+#dictee input {
+    font-family: Segoe UI, sans-serif;
+    width: 100%;
+    font-size: 16px;
+    padding: 3px 0;
+    margin-bottom: 4px;
+}
+#dictee input.with-button {
+    width: calc(100% - 50px);
+}
+#dictee button {
+    width: 100%;
+    margin: 40px 0;
+    padding: 8px;
+    background-color: #593196;
+    color: white;   
+    font-size: 2em;
+}
+#dictee button:hover, #overlay #window button:hover, a:hover {
+    filter: brightness(1.2);
+    cursor: pointer;
+    text-decoration: none;
+}
+footer span {
+    display: block;
+    margin: auto;
+    width: calc(50% + 30px);
+}
+#overlay {
+    display: none;
+    background-color: rgba(0,0,0,.6);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0; top: 0;
+}
+#overlay #window {
+    width: 400px;
+    height: 240px;
+    position: absolute;
+    left: calc(50% - 200px);
+    top: calc(50% - 120px);
+    background-color: #F9F8FC;
+}
+#overlay #window h2, #overlay #window span {
+    width: fit-content;
+    display: block;
+    margin: 22px auto;
+}
+#overlay #window button {
+    font-size: 20px;
+    color: white;
+    margin-left: 40px;
+    padding: 8px 30px;
+    background-color: #593196;
+    border: 1px solid black;
+}
+#overlay #window button[disabled] {
+    background-color: #aaa;
+}
+pre {
+    background-color: #F9F8FC;
+    border: 1px solid black;
+    border-radius: 8px;
+    padding-bottom: 1.25em;
+}
+code {
+    position: relative;
+    left: 1.25em;
+}
