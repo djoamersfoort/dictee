@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_POST["toegangscode"])) {
-    if ($_POST["toegangscode"] == "DJO_D1cte3") {
+    if ($_POST["toegangscode"] == $_SERVER["passcode"]) {
         $_SESSION["access_permitted"] = true;
         header("location: ../informatie/");
     } else $err = "<h2>Oei, de toegangscode is niet juist!</h2>\n";
