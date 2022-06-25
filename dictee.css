@@ -41,6 +41,30 @@ body {
 a, a:visited {
     color: #593196;
 }
+table {
+    margin: 2% auto auto auto;
+}
+.maincard {
+    text-align: center;
+    border: 1px solid #593196;
+    width: 40%;
+    padding: 0;
+}
+.maincard a {
+    display: block;
+    background-color: #593196;
+    text-decoration: none;
+    color: white;
+    margin-top: 50px;
+    font-size: 18px;
+    padding: 6px;
+}
+#oei {
+    background-color: red;
+    color: white;
+    text-align: center;
+    padding: 6px 0;
+}
 
 #dictee {
     width: 50%;
@@ -112,6 +136,14 @@ footer span {
 }
 #overlay #window button[disabled] {
     background-color: #aaa;
+}
+#overlay #window input {
+    width: calc(100% - 100px);
+    position: relative;
+    left: 44px;
+    bottom: 23px;
+    font-size: 17px;
+    padding: 2px;
 }
 pre {
     background-color: #F9F8FC;

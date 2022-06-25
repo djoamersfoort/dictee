@@ -3,7 +3,7 @@ session_start();
 if (isset($_POST["toegangscode"])) {
     if ($_POST["toegangscode"] == $_SERVER["passcode"]) {
         $_SESSION["access_permitted"] = true;
-        header("location: ../informatie/");
+        header("location: ../administratie/");
     } else $err = "<h2>Oei, de toegangscode is niet juist!</h2>\n";
 } else $err = "";
 ?>
@@ -23,10 +23,9 @@ if (isset($_POST["toegangscode"])) {
 </div>
 <div id="mainhead">
 <h1>Hallo beste examinator!</h1>
-<h2>Log in om de informatie over het dictee te kunnen inzien.</h2>
+<h2>Log in om de administratie van het dictee te kunnen doen.</h2>
 </div>
 <div id="dictee">
-<script src="https://nm-games.eu/ad"></script>
 <h3>Toegangscode:</h3>
 <form action="../examinator/" method="post">
 <input type="password" name="toegangscode" placeholder="Toegangscode" required>
