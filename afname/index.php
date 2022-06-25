@@ -24,21 +24,21 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 </div>
 <div id="dictee">
 <form action="../afname/" method="post" autocomplete="off">
-<h3>Nederlandse woorden</h3>
+<h3>Nederlandse woorden (hoofdletters, geen punt)</h3>
 <?php
 foreach ($dictee->woorden as $i => $d) {
     $num = $i + 1;
     echo "<input name=\"woord$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
 }
 ?>
-<h3>Nederlandse zinnen</h3>
+<h3>Nederlandse zinnen (hoofdletters en punt)</h3>
 <?php
 foreach ($dictee->zinnen as $i => $d) {
     $num = $i + 1;
     echo "<input name=\"zin$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
 }
 ?>
-<h3>Nederlandse leenwoorden</h3>
+<h3>Nederlandse leenwoorden (hoofdletters, geen punt)</h3>
 <?php
 foreach ($dictee->leenwoorden as $i => $d) {
     $num = $i + 1;
