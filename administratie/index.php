@@ -63,22 +63,22 @@ if (isset($_GET["delresults"])) {
 <?= $register["busy"] ? '<button onclick="location.search=\'?open=0\'">Dictee vergrendelen</button>':'<button onclick="location.search=\'?open=1\'">Dictee vrijgeven</button>'; ?>
 
 <?php
-if ($register["busy"]) echo "<i>Het dictee kan niet worden gewijzigd wanneer het vrijgegeven is.</i><br><br>";
-else {
-    echo '<form action="../administratie/" method="post">
-    <h3>Nederlandse woorden<a onclick="add(0)">+</a></h3>
-    <ol>';
-    foreach ($dictee->woorden as $i => $d) echo "<li><input name=\"woord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-    echo '</ol>
-    <h3>Nederlandse zinnen<a onclick="add(1)">+</a></h3>
-    <ol>';
-    foreach ($dictee->zinnen as $i => $d) echo "<li><input name=\"zin$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-    echo '</ol>
-    <h3>Nederlandse leenwoorden<a onclick="add(2)">+</a></h3>
-    <ol>';
-    foreach ($dictee->leenwoorden as $i => $d) echo "<li><input name=\"leenwoord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-    echo '</ol>
-    <button type="submit" name="bijwerken">Bijwerken</button>
+if (!$register["busy"]) echo '<form action="../administratie/" method="post">';
+else echo "<i>Het dictee kan niet worden gewijzigd wanneer het is vrijgegeven.</i><br><br>";
+echo ($register["busy"]) ? '<h3>Nederlandse woorden</h3>':'<h3>Nederlandse woorden<a onclick="add(0)">+</a></h3>';
+echo '<ol>';
+foreach ($dictee->woorden as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"woord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+echo '</ol>';
+echo ($register["busy"]) ? '<h3>Nederlandse zinnen</h3>':'<h3>Nederlandse zinnen<a onclick="add(1)">+</a></h3>';
+echo '<ol>';
+foreach ($dictee->zinnen as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"zin$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+echo '</ol>';
+echo ($register["busy"]) ? '<h3>Nederlandse leenwoorden</h3>':'<h3>Nederlandse leenwoorden<a onclick="add(2)">+</a></h3>';
+echo '<ol>';
+foreach ($dictee->leenwoorden as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"leenwoord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+echo '</ol>';
+if (!$register["busy"]) {
+    echo '<button type="submit" name="bijwerken">Bijwerken</button>
     </form>';
 }
 
@@ -113,7 +113,7 @@ function add(to) {
 <?php
 if (isset($_POST["bijwerken"]) and !$register["busy"]) {
     $contents = ["woorden" => [], "zinnen" => [], "leenwoorden" => []];
-    $msg = $ok_msg = "<h1>Gelukt!</h1><h2>Het dictee is bijgewerkt! <a href=\'../administratie/\'>Ga terug</a> om je wijzigingen te bekijken.</h2>";
+    $msg = "<h1>Gelukt!</h1><h2>Het dictee is bijgewerkt! <a href=\'../administratie/\'>Ga terug</a> om je wijzigingen te bekijken.</h2>";
     foreach ($_POST as $k => $v) {
         if ($k == "bijwerken") continue;
         else {
