@@ -1,5 +1,8 @@
 <?php
 session_start();
+setcookie("TEST", "1", time() + 86400 * 365, "/");
+if (!isset($_GET["cookie"]) and count($_COOKIE) < 1) header("location: https://dictee.djoamersfoort.nl/?cookie");
+elseif (isset($_GET["cookie"]) and count($_COOKIE) >= 1) header("location: https://dictee.djoamersfoort.nl");
 
 if (isset($_POST["playername"])) {
     $name = str_replace('"', '\"', $_POST["playername"]);
@@ -68,11 +71,14 @@ var warnings = {
     "oei": "Oei, de examinator heeft jou uit het dictee getrapt!",
     "used": "Oei, die naam is al in gebruik!",
     "done": "Oei, de examinator heeft het dictee afgesloten!",
-    "busy": "Oei, het dictee is helaas al gestart!"
+    "busy": "Oei, het dictee is helaas al gestart!",
+    "cookie": "&nbsp; Oei, je moet cookies aan hebben staan om mee te doen! &nbsp;"
 };
 for (i in warnings) {
     if (location.search == `?${i}`) document.querySelector("tr").outerHTML = `<tr><td colspan="2" id="oei">${warnings[i]}</td></tr>` + document.querySelector("tr").outerHTML;
 }
+
+if (location.search == "?cookie") document.querySelectorAll("tr")[1].remove();
 </script>
 </div>
 </body>
