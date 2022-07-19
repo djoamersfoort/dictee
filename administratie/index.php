@@ -56,7 +56,7 @@ if (isset($_GET["delresults"])) {
 <h2>Administreer het officiële DJO Dictee.</h2>
 </div>
 <div id="dictee">
-<h3>Huidige deelnemers</h3>
+<h3>Huidige kandidaten</h3>
 <ul>
 <li><i>Bezig met ophalen...</i></li>
 </ul>
@@ -67,15 +67,25 @@ if (!$register["busy"]) echo '<form action="../administratie/" method="post">';
 else echo "<i>Het dictee kan niet worden gewijzigd wanneer het is vrijgegeven.</i><br><br>";
 echo ($register["busy"]) ? '<h3>Nederlandse woorden</h3>':'<h3>Nederlandse woorden<a onclick="add(0)">+</a></h3>';
 echo '<ol>';
-foreach ($dictee->woorden as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"woord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+foreach ($dictee->woorden as $i => $d) {
+    $v = htmlspecialchars($d);
+    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"woord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+}
 echo '</ol>';
 echo ($register["busy"]) ? '<h3>Nederlandse zinnen</h3>':'<h3>Nederlandse zinnen<a onclick="add(1)">+</a></h3>';
 echo '<ol>';
-foreach ($dictee->zinnen as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"zin$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+foreach ($dictee->zinnen as $i => $d) {
+    $v = htmlspecialchars($d);
+    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"zin$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+}
 echo '</ol>';
 echo ($register["busy"]) ? '<h3>Nederlandse leenwoorden</h3>':'<h3>Nederlandse leenwoorden<a onclick="add(2)">+</a></h3>';
 echo '<ol>';
-foreach ($dictee->leenwoorden as $i => $d) echo ($register["busy"]) ? "<li>$d</li>\n":"<li><input name=\"leenwoord$i\" value=\"$d\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+foreach ($dictee->leenwoorden as $i => $d) {
+    $v = htmlspecialchars($d);
+    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"leenwoord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
+}
+if (!$register["busy"]) echo '<i>Zorg dat je de definities van alle leenwoorden weet, die mogen de kandidaten namelijk vragen!</i>';
 echo '</ol>';
 if (!$register["busy"]) {
     echo '<button type="submit" name="bijwerken">Bijwerken</button>
@@ -120,7 +130,7 @@ if (isset($_POST["bijwerken"]) and !$register["busy"]) {
             $keys = array_combine(["woo", "zin", "lee"], array_keys($contents));
             if (strtoupper($v[0]) != $v[0]) $msg = "<h1>Oei!</h1><h2>Zorg dat alles met een hoofdletter begint! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
             elseif (empty($v[0])) $msg = "<h1>Oei!</h1><h2>Zorg dat alles ingevuld is! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
-            else array_push($contents[$keys[substr($k, 0, 3)]], str_replace('"', '\"', $v));
+            else array_push($contents[$keys[substr($k, 0, 3)]], $v);
         }
     }
     $json = str_replace(["\",", "{", "[", "],"], ["\",\n    ", "{\n    ", "[\n    ", "],\n"], json_encode($contents));
