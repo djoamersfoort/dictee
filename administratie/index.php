@@ -85,10 +85,10 @@ foreach ($dictee->leenwoorden as $i => $d) {
     $v = htmlspecialchars($d);
     echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"leenwoord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
 }
-if (!$register["busy"]) echo '<i>Zorg dat je de definities van alle leenwoorden weet, die mogen de kandidaten namelijk vragen!</i>';
 echo '</ol>';
 if (!$register["busy"]) {
-    echo '<button type="submit" name="bijwerken">Bijwerken</button>
+    echo '<i>Zorg dat je de definities van alle leenwoorden weet, die mogen de kandidaten namelijk vragen!</i>
+    <button type="submit" name="bijwerken">Bijwerken</button>
     </form>';
 }
 
@@ -101,9 +101,8 @@ while (!feof($f)) {
     else echo str_replace("\n", "<br>", $l);
 }
 fclose($f);
-if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="done(1)">Wis alle resultaten</button>';
+if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="done(1)">Wis alle resultaten</button><button onclick="location.search=\'?send\'">Verstuur naar lichtkrant</button>';
 ?>
-<button onclick="location.search='?send'">Verstuur naar lichtkrant</button>
 </div>
 <div id="overlay">
 <div id="window">
