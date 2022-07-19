@@ -101,6 +101,10 @@ if (count($_POST) > 0) {
 }
 ?>
 
+window.addEventListener("keydown", function(e) {
+    if (e.key == "Escape") done(0);
+});
+
 function done(mode) {
     var cannotSend = false;
     for (i of document.querySelectorAll("input")) {

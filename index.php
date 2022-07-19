@@ -58,6 +58,11 @@ if (isset($_POST["playername"])) {
 </div>
 </div>
 <script>
+window.addEventListener("keydown", function(e) {
+    if (e.key == "Enter" && document.querySelector("#overlay input").value.length < 2) e.preventDefault();
+    else if (e.key == "Escape") windowstate(0);
+});
+
 function windowstate(to) {
     document.getElementById("overlay").style.display = (to) ? "block":"none";
     if (to) document.querySelector("#overlay #window input").focus();

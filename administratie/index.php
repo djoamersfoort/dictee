@@ -120,7 +120,7 @@ if (isset($_POST["bijwerken"]) and !$register["busy"]) {
             $keys = array_combine(["woo", "zin", "lee"], array_keys($contents));
             if (strtoupper($v[0]) != $v[0]) $msg = "<h1>Oei!</h1><h2>Zorg dat alles met een hoofdletter begint! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
             elseif (empty($v[0])) $msg = "<h1>Oei!</h1><h2>Zorg dat alles ingevuld is! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
-            else array_push($contents[$keys[substr($k, 0, 3)]], $v);
+            else array_push($contents[$keys[substr($k, 0, 3)]], str_replace('"', '\"', $v));
         }
     }
     $json = str_replace(["\",", "{", "[", "],"], ["\",\n    ", "{\n    ", "[\n    ", "],\n"], json_encode($contents));
@@ -131,6 +131,10 @@ if (isset($_POST["bijwerken"]) and !$register["busy"]) {
     echo 'document.getElementById("dictee").remove();';
 }
 ?>
+
+window.addEventListener("keydown", function(e) {
+    if (e.key == "Escape") done(0);
+});
 
 function done(mode) {
     document.getElementById("overlay").style.display = (mode) ? "unset":"none";
