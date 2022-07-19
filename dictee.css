@@ -70,6 +70,9 @@ table {
     width: 50%;
     margin: auto;
 }
+#dictee p {
+    margin-left: 20px;
+}
 #dictee h3 {
     font-weight: normal;
 }
