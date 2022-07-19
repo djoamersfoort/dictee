@@ -70,21 +70,21 @@ if (count($_POST) > 0) {
     foreach ($_POST as $i => $w) $txt .= str_replace(["leen", "zin", "woord"], ["Leen", "Zin ", "Woord "], $i) . ": $w\n";
     
     for ($i=0; $i<count($dictee->woorden); $i++) {
-        if ($dictee->woorden[$i] == $_POST["woord$i"]) {
+        if ($dictee->woorden[$i] == trim($_POST["woord$i"])) {
             $pts[0] += 1;
             $txt = preg_replace("/Woord $i/", "(+) Woord $i", $txt, 1);
         } else $txt = preg_replace("/Woord $i/", "(-) Woord $i", $txt, 1);
         $total[0]++;
     }
     for ($i=0; $i<count($dictee->zinnen); $i++) {
-        if ($dictee->zinnen[$i] == $_POST["zin$i"]) {
+        if ($dictee->zinnen[$i] == trim($_POST["zin$i"])) {
             $pts[1] += 1;
             $txt = preg_replace("/Zin $i/", "(+) Zin $i", $txt, 1);
         } else $txt = preg_replace("/Zin $i/", "(-) Zin $i", $txt, 1);
         $total[1]++;
     }
     for ($i=0; $i<count($dictee->leenwoorden); $i++) {
-        if ($dictee->leenwoorden[$i] == $_POST["leenwoord$i"]) {
+        if ($dictee->leenwoorden[$i] == trim($_POST["leenwoord$i"])) {
             $pts[2] += 1;
             $txt = preg_replace("/LeenWoord $i/", "(+) LeenWoord $i", $txt, 1);
         } else $txt = preg_replace("/LeenWoord $i/", "(-) LeenWoord $i", $txt, 1);
