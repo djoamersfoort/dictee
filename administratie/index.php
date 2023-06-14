@@ -20,7 +20,7 @@ if (isset($_GET["delresults"])) {
     file_put_contents("../" . $_SERVER["REGISTERfilename"], json_encode($register));
     header("location: ../administratie/");
 } elseif (isset($_GET["send"]) and filesize("../" . $_SERVER["RESULTSfilename"]) > 0) {
-    $total = count($dictee->woorden) + count($dictee->zinnen) + count($dictee->leenwoorden);
+    $total = count($dictee->woorden) + count($dictee->zinnen);
     $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
     $json = [];
     $json_at = 0;
@@ -40,7 +40,7 @@ if (isset($_GET["delresults"])) {
 <!DOCTYPE html>
 <html>
 <head>
-<title>DJO Amersfoort | Officiëel dictee</title>
+<title>DJO Amersfoort | Officieel dictee</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">
@@ -65,32 +65,20 @@ if (isset($_GET["delresults"])) {
 <?php
 if (!$register["busy"]) echo '<form action="../administratie/" method="post">';
 else echo "<i>Het dictee kan niet worden gewijzigd wanneer het is vrijgegeven.</i><br><br>";
-echo ($register["busy"]) ? '<h3>Nederlandse woorden</h3>':'<h3>Nederlandse woorden<a onclick="add(0)">+</a></h3>';
+echo ($register["busy"]) ? '<h3>Woorden</h3>':'<h3>Woorden<a onclick="add(0)">+</a></h3>';
 echo '<ol>';
 foreach ($dictee->woorden as $i => $d) {
     $v = htmlspecialchars($d);
     echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"woord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
 }
 echo '</ol>';
-echo ($register["busy"]) ? '<h3>Nederlandse zinnen</h3>':'<h3>Nederlandse zinnen<a onclick="add(1)">+</a></h3>';
+echo ($register["busy"]) ? '<h3>Zinnen</h3>':'<h3>Zinnen<a onclick="add(1)">+</a></h3>';
 echo '<ol>';
 foreach ($dictee->zinnen as $i => $d) {
     $v = htmlspecialchars($d);
     echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"zin$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
 }
-echo '</ol>';
-echo ($register["busy"]) ? '<h3>Nederlandse leenwoorden</h3>':'<h3>Nederlandse leenwoorden<a onclick="add(2)">+</a></h3>';
-echo '<ol>';
-foreach ($dictee->leenwoorden as $i => $d) {
-    $v = htmlspecialchars($d);
-    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"leenwoord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-}
-echo '</ol>';
-if (!$register["busy"]) {
-    echo '<i>Zorg dat je de definities van alle leenwoorden weet, die mogen de kandidaten namelijk vragen!</i>
-    <button type="submit" name="bijwerken">Bijwerken</button>
-    </form>';
-}
+echo '</ol></form>';
 
 if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo "<h1>Resultaten</h1>";
 $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
@@ -107,7 +95,10 @@ if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="do
 <div id="overlay">
 <div id="window">
 <h2>Let op!</h2>
-<span>Je weet echt zeker dat je alle resultaten wilt wissen?<br>Je kan dat niet meer ongedaan maken!</span>
+<span>Weet je echt zeker dat je alle resultaten wilt wissen?
+    <?= (strlen(file_get_contents("../" . $_SERVER["APIfilename"])) > 2) ? "<br>Hiermee wis je ook de gegevens voor de lichtkrant." : ""; ?>
+    <br>Je kan dat niet meer ongedaan maken!
+</span>
 <br>
 <button id="confirm" onclick="location.search='?delresults'">Ja</button>
 <button id="back" onclick="done(0)">Nee</button>
@@ -115,13 +106,14 @@ if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="do
 </div>
 <script>
 function add(to) {
-    var names = ["woord", "zin", "leenwoord"];
+    var names = ["woord", "zin"];
     var num = document.querySelectorAll("ol")[to].children.length;
     document.querySelectorAll("ol")[to].innerHTML += `<li><input name="${names[to] + num}" class="with-button" required><a onclick="this.parentNode.remove()">-</a></li>`;
 }
+
 <?php
 if (isset($_POST["bijwerken"]) and !$register["busy"]) {
-    $contents = ["woorden" => [], "zinnen" => [], "leenwoorden" => []];
+    $contents = ["woorden" => [], "zinnen" => []];
     $msg = "<h1>Gelukt!</h1><h2>Het dictee is bijgewerkt! <a href=\'../administratie/\'>Ga terug</a> om je wijzigingen te bekijken.</h2>";
     foreach ($_POST as $k => $v) {
         if ($k == "bijwerken") continue;
@@ -158,6 +150,7 @@ function getPlayerInformation() {
     var req = new XMLHttpRequest();
     req.onload = function() {
         document.querySelector("ul").innerHTML = this.responseText;
+        document.querySelector("#dictee button").disabled = (this.responseText.length == 67);
     };
     req.open("GET", "check.php", true);
     req.send();

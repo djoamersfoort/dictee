@@ -40,6 +40,7 @@ body {
 }
 a, a:visited {
     color: #593196;
+    transition: .25s ease;
 }
 table {
     margin: 2% auto auto auto;
@@ -58,6 +59,12 @@ table {
     margin-top: 50px;
     font-size: 18px;
     padding: 6px;
+}
+.maincard a:focus {
+    box-shadow: 0 0 8px #593196;
+}
+.maincard a.disabled {
+    background-color: #aaa;
 }
 #oei {
     background-color: red;
@@ -95,13 +102,20 @@ table {
     margin: 40px 0;
     padding: 8px;
     background-color: #593196;
-    color: white;   
+    color: white;
     font-size: 2em;
+    outline: none;
+    border: 1px solid black;
+    border-radius: 4px;
+    transition: .25s ease;
 }
-#dictee button:hover, #overlay #window button:hover, a:hover {
+#dictee button:not(:disabled):hover, #overlay #window button:hover, a:not(.disabled):hover {
     filter: brightness(1.2);
     cursor: pointer;
     text-decoration: none;
+}
+#dictee button:disabled {
+    background-color: #aaa;
 }
 footer span {
     display: block;
@@ -136,6 +150,8 @@ footer span {
     padding: 8px 30px;
     background-color: #593196;
     border: 1px solid black;
+    border-radius: 4px;
+    transition: .25s ease;
 }
 #overlay #window button[disabled] {
     background-color: #aaa;

@@ -1,14 +1,17 @@
 <?php
 session_start();
 setcookie("TEST", "1", time() + 86400 * 365, "/");
-if (!isset($_GET["cookie"]) and count($_COOKIE) < 1) header("location: https://dictee.djoamersfoort.nl/?cookie");
-elseif (isset($_GET["cookie"]) and count($_COOKIE) >= 1) header("location: https://dictee.djoamersfoort.nl");
+if (!isset($_GET["cookie"]) and count($_COOKIE) < 1) header("location: /?cookie");
+elseif (isset($_GET["cookie"]) and count($_COOKIE) >= 1) header("location: /");
 
 if (isset($_POST["playername"])) {
     $name = str_replace('"', '\"', $_POST["playername"]);
     $json = get_object_vars(json_decode(file_get_contents($_SERVER["REGISTERfilename"])));
-    if (in_array($name, $json["players"])) header("location: https://dictee.djoamersfoort.nl/?used");
-    elseif ($json["busy"]) header("location: https://dictee.djoamersfoort.nl/?busy");
+    preg_match("/^(\w+\s{1}\w+)/", $name, $matches);
+    if (in_array($name, $json["players"])) header("location: /?used");
+    elseif ($json["busy"]) header("location: /?busy");
+    elseif (count($matches) == 0) header("location: /?name");
+    elseif ($name[0] != strtoupper($name[0])) header("location: /?caps");
     else {
         array_push($json["players"], $name);
         file_put_contents($_SERVER["REGISTERfilename"], json_encode($json));
@@ -20,7 +23,7 @@ if (isset($_POST["playername"])) {
 <!DOCTYPE html>
 <html>
 <head>
-<title>DJO Amersfoort | Officiëel dictee</title>
+<title>DJO Amersfoort | Officieel dictee</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">
@@ -49,7 +52,7 @@ if (isset($_POST["playername"])) {
 <h2>Ben je zover?</h2>
 <span>Je staat op het punt het dictee te starten.</span>
 <br>
-<form action="https://dictee.djoamersfoort.nl" method="post" style="height:10px">
+<form action="." method="post" style="height:10px">
 <input type="text" name="playername" placeholder="Wat is je naam?" oninput="validate(this)" spellcheck="false" autocomplete="off">
 </form>
 <br>
@@ -58,12 +61,16 @@ if (isset($_POST["playername"])) {
 </div>
 </div>
 <script>
+var busy;
+
 window.addEventListener("keydown", function(e) {
     if (e.key == "Enter" && document.querySelector("#overlay input").value.length < 2) e.preventDefault();
     else if (e.key == "Escape") windowstate(0);
 });
 
 function windowstate(to) {
+    if (busy) return;
+    
     document.getElementById("overlay").style.display = (to) ? "block":"none";
     if (to) document.querySelector("#overlay #window input").focus();
 }
@@ -72,9 +79,24 @@ function validate(element) {
     document.getElementById("confirm").disabled = (element.value.length < 2);
 }
 
+function canStart() {
+    var req = new XMLHttpRequest();
+    req.onload = function() {
+        if (this.status == 200) {
+            busy = JSON.parse(this.responseText).busy;
+            document.querySelector('[onclick="windowstate(1)"]').className = (busy) ? "disabled" : "";
+            document.querySelector('[onclick="windowstate(1)"]').innerHTML = (busy) ? "Dictee reeds gestart" : "Beginnen »";
+        }
+    };
+    req.open("GET", "<?= $_SERVER["REGISTERfilename"]; ?>", true);
+    req.send();
+}
+
 var warnings = {
     "oei": "Oei, de examinator heeft jou uit het dictee getrapt!",
     "used": "Oei, die naam is al in gebruik!",
+    "name": "Oei, die naam klopt niet helemaal! Heb je het reglement gelezen?",
+    "caps": "Oei, daar mist een hoofdletter! Let daar goed op!",
     "done": "Oei, de examinator heeft het dictee afgesloten!",
     "busy": "Oei, het dictee is helaas al gestart!",
     "cookie": "&nbsp; Oei, je moet cookies aan hebben staan om mee te doen! &nbsp;"
@@ -84,6 +106,9 @@ for (i in warnings) {
 }
 
 if (location.search == "?cookie") document.querySelectorAll("tr")[1].remove();
+
+canStart();
+setInterval(canStart, 1000);
 </script>
 </div>
 </body>

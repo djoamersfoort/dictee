@@ -6,7 +6,7 @@ $json = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTER
 <!DOCTYPE html>
 <html>
 <head>
-<title>DJO Amersfoort | Officiëel dictee</title>
+<title>DJO Amersfoort | Officieel dictee</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">

@@ -8,7 +8,7 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 <!DOCTYPE html>
 <html>
 <head>
-<title>DJO Amersfoort | Officiëel dictee</title>
+<title>DJO Amersfoort | Officieel dictee</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">
@@ -24,25 +24,18 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 </div>
 <div id="dictee">
 <form action="../afname/" method="post" autocomplete="off">
-<h3>Nederlandse woorden (hoofdletters, geen punt)</h3>
+<h3>Woorden (hoofdletters, geen punt)</h3>
 <?php
 foreach ($dictee->woorden as $i => $d) {
     $num = $i + 1;
     echo "<input name=\"woord$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
 }
 ?>
-<h3>Nederlandse zinnen (hoofdletters en punt)</h3>
+<h3>Zinnen (hoofdletters en punt)</h3>
 <?php
 foreach ($dictee->zinnen as $i => $d) {
     $num = $i + 1;
     echo "<input name=\"zin$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
-}
-?>
-<h3>Nederlandse leenwoorden (hoofdletters, geen punt)</h3>
-<?php
-foreach ($dictee->leenwoorden as $i => $d) {
-    $num = $i + 1;
-    echo "<input name=\"leenwoord$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
 }
 ?>
 </form>
@@ -67,7 +60,7 @@ if (count($_POST) > 0) {
     $total = $pts = [0, 0, 0];
     $f = fopen("../" . $_SERVER["RESULTSfilename"], "a");
     $txt = ">> Dictee ingezonden door " . $_SESSION["playername"] . ":\n";
-    foreach ($_POST as $i => $w) $txt .= str_replace(["leen", "zin", "woord"], ["Leen", "Zin ", "Woord "], $i) . ": $w\n";
+    foreach ($_POST as $i => $w) $txt .= str_replace(["woord", "zin"], ["Woord ", "Zin "], $i) . ": $w\n";
     
     for ($i=0; $i<count($dictee->woorden); $i++) {
         if ($dictee->woorden[$i] == trim($_POST["woord$i"])) {
@@ -83,13 +76,6 @@ if (count($_POST) > 0) {
         } else $txt = preg_replace("/Zin $i/", "(-) Zin $i", $txt, 1);
         $total[1]++;
     }
-    for ($i=0; $i<count($dictee->leenwoorden); $i++) {
-        if ($dictee->leenwoorden[$i] == trim($_POST["leenwoord$i"])) {
-            $pts[2] += 1;
-            $txt = preg_replace("/LeenWoord $i/", "(+) LeenWoord $i", $txt, 1);
-        } else $txt = preg_replace("/LeenWoord $i/", "(-) LeenWoord $i", $txt, 1);
-        $total[2]++;
-    }
     $geslaagd = (array_sum($pts) >= ceil(array_sum($total) / 2));
     $conclusie = $geslaagd ? "<h1 style=\\'color:green\\'>Je bent geslaagd!</h1><h2>Gefeliciteerd!</h2>":"<h1 style=\\'color:red\\'>Je bent helaas gezakt...</h1><h2>Volgende keer lukt het je vast.</h2>";
     $txt .= $geslaagd ? "[+] Deze kandidaat is geslaagd.\n*****":"[-] Deze kandidaat is gezakt.\n*****";
@@ -97,7 +83,7 @@ if (count($_POST) > 0) {
     fwrite($f, $txt);
     fclose($f);
     echo "document.getElementById('mainhead').innerHTML = '$conclusie';\n";
-    echo "document.getElementById('dictee').innerHTML = '<h3>Je had $pts[0] van de $total[0] woorden goed.</h3><h3>Je had $pts[1] van de $total[1] zinnen goed.</h3><h3>Je had $pts[2] van de $total[2] leenwoorden goed.</h3><button onclick=\"location.href=\'../\'\">Terug</button>';";
+    echo "document.getElementById('dictee').innerHTML = '<h3>Je had $pts[0] van de $total[0] woorden goed.</h3><h3>Je had $pts[1] van de $total[1] zinnen goed.</h3><button onclick=\"location.href=\'../\'\">Terug</button>';";
 }
 ?>
 
