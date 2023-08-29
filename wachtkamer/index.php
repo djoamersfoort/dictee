@@ -21,7 +21,7 @@ $json = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTER
 <h2>Wacht hier totdat de examinator het DJO Dictee start.</h2>
 </div>
 <div id="dictee">
-<script src="https://nm-games.eu/ad"></script>
+<img src="https://media.tenor.com/2WtBkf2YI00AAAAd/bean-mr.gif">
 </div>
 <script>
 getRedirectInformation();
@@ -31,7 +31,7 @@ function getRedirectInformation() {
     var req = new XMLHttpRequest();
     req.onload = function() {
         if (req.responseText == "Yes!") location.href = "../afname/";
-        else if (req.responseText == "Get out") location.href = "../?oei";
+        else if (req.responseText == "Get out") location.href = "../?kick";
     };
     req.open("POST", "check.php", true);
     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

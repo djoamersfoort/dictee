@@ -2,7 +2,7 @@
 session_start();
 if (!isset($_SESSION["access_permitted"])) header("location: ../examinator/");
 
-$dictee = json_decode(file_get_contents("../" . $_SERVER["JSONfilename"]));
+$dictee = file_get_contents("../" . $_SERVER["DICTEEfilename"]);
 $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTERfilename"])));
 if (isset($_GET["delresults"])) {
     file_put_contents("../" . $_SERVER["RESULTSfilename"], "");
@@ -19,22 +19,22 @@ if (isset($_GET["delresults"])) {
     if (!$open) $register["players"] = [];
     file_put_contents("../" . $_SERVER["REGISTERfilename"], json_encode($register));
     header("location: ../administratie/");
-} elseif (isset($_GET["send"]) and filesize("../" . $_SERVER["RESULTSfilename"]) > 0) {
-    $total = count($dictee->woorden) + count($dictee->zinnen);
-    $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
-    $json = [];
-    $json_at = 0;
-    while (!feof($f)) {
-        $l = fgets($f);
-        if (substr($l, 0, 2) == ">>") {
-            $first_name = explode(" ", substr($l, 26, -1))[0];
-            array_push($json, ["name" => $first_name, "score" => 0, "total" => $total]);
-        } elseif (substr($l, 0, 3) == "(+)") $json[$json_at]["score"]++;
-        elseif (substr($l, 0, 5) == "*****") $json_at++;
-    }
-    fclose($f);
-    file_put_contents("../" . $_SERVER["APIfilename"], json_encode($json));
-    header("location: ../administratie/");
+// } elseif (isset($_GET["send"]) and filesize("../" . $_SERVER["RESULTSfilename"]) > 0) {
+//     $total = count($dictee->woorden) + count($dictee->zinnen);
+//     $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
+//     $json = [];
+//     $json_at = 0;
+//     while (!feof($f)) {
+//         $l = fgets($f);
+//         if (substr($l, 0, 2) == ">>") {
+//             $first_name = explode(" ", substr($l, 26, -1))[0];
+//             array_push($json, ["name" => $first_name, "score" => 0, "total" => $total]);
+//         } elseif (substr($l, 0, 3) == "(+)") $json[$json_at]["score"]++;
+//         elseif (substr($l, 0, 5) == "*****") $json_at++;
+//     }
+//     fclose($f);
+//     file_put_contents("../" . $_SERVER["APIfilename"], json_encode($json));
+//     header("location: ../administratie/");
 }
 ?>
 <!DOCTYPE html>
@@ -62,25 +62,17 @@ if (isset($_GET["delresults"])) {
 </ul>
 <?= $register["busy"] ? '<button onclick="location.search=\'?open=0\'">Dictee vergrendelen</button>':'<button onclick="location.search=\'?open=1\'">Dictee vrijgeven</button>'; ?>
 
-<?php
-if (!$register["busy"]) echo '<form action="../administratie/" method="post">';
-else echo "<i>Het dictee kan niet worden gewijzigd wanneer het is vrijgegeven.</i><br><br>";
-echo ($register["busy"]) ? '<h3>Woorden</h3>':'<h3>Woorden<a onclick="add(0)">+</a></h3>';
-echo '<ol>';
-foreach ($dictee->woorden as $i => $d) {
-    $v = htmlspecialchars($d);
-    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"woord$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-}
-echo '</ol>';
-echo ($register["busy"]) ? '<h3>Zinnen</h3>':'<h3>Zinnen<a onclick="add(1)">+</a></h3>';
-echo '<ol>';
-foreach ($dictee->zinnen as $i => $d) {
-    $v = htmlspecialchars($d);
-    echo ($register["busy"]) ? "<li>$v</li>\n":"<li><input name=\"zin$i\" value=\"$v\" class=\"with-button\" required><a onclick=\"this.parentNode.remove()\">-</a></li>\n";
-}
-echo '</ol></form>';
+<h3>Dictee</h3>
+<h4><i>Woorden tussen accolades zijn voor de kandidaten niet zichtbaar.</i></h4>
+<form action="../administratie/" method="post">
+<textarea name="dictee-contents" spellcheck="false">
+<?= htmlspecialchars($dictee); ?>
+</textarea>
+<button type="submit" name="bijwerken">Opslaan</button>
+</form>
 
-if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo "<h1>Resultaten</h1>";
+<?php
+if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo "<h3>Resultaten</h3>";
 $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
 while (!feof($f)) {
     $l = htmlspecialchars(fgets($f));
@@ -105,28 +97,10 @@ if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="do
 </div>
 </div>
 <script>
-function add(to) {
-    var names = ["woord", "zin"];
-    var num = document.querySelectorAll("ol")[to].children.length;
-    document.querySelectorAll("ol")[to].innerHTML += `<li><input name="${names[to] + num}" class="with-button" required><a onclick="this.parentNode.remove()">-</a></li>`;
-}
-
 <?php
 if (isset($_POST["bijwerken"]) and !$register["busy"]) {
-    $contents = ["woorden" => [], "zinnen" => []];
-    $msg = "<h1>Gelukt!</h1><h2>Het dictee is bijgewerkt! <a href=\'../administratie/\'>Ga terug</a> om je wijzigingen te bekijken.</h2>";
-    foreach ($_POST as $k => $v) {
-        if ($k == "bijwerken") continue;
-        else {
-            $keys = array_combine(["woo", "zin", "lee"], array_keys($contents));
-            if (strtoupper($v[0]) != $v[0]) $msg = "<h1>Oei!</h1><h2>Zorg dat alles met een hoofdletter begint! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
-            elseif (empty($v[0])) $msg = "<h1>Oei!</h1><h2>Zorg dat alles ingevuld is! <a href=\'../administratie/\'>Ga terug</a> om het te fixen.</h2>";
-            else array_push($contents[$keys[substr($k, 0, 3)]], trim($v));
-        }
-    }
-    $json = str_replace(["\",", "{", "[", "],"], ["\",\n    ", "{\n    ", "[\n    ", "],\n"], json_encode($contents));
-    
-    file_put_contents("../" . $_SERVER["JSONfilename"], $json);
+    file_put_contents("../" . $_SERVER["DICTEEfilename"], $_POST["dictee-contents"]);
+    $msg = "<h1>Gelukt!</h1><h2>Het dictee is bijgewerkt! <a href=\'../administratie/\'>Ga terug</a> om je wijzigingen te bekijken.</h2>";    
     echo "document.getElementById(\"mainhead\").innerHTML = `$msg`;";
     echo "\n";
     echo 'document.getElementById("dictee").remove();';

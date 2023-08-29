@@ -1,7 +1,9 @@
 <?php
 session_start();
 if (!isset($_SESSION["can_enter"])) header("location: ../wachtkamer/");
-$dictee = json_decode(file_get_contents("../" . $_SERVER["JSONfilename"]));
+$dictee = $shown_dictee = file_get_contents("../" . $_SERVER["DICTEEfilename"]);
+for ($i=0; $i<substr_count($dictee, "{"); $i++) $shown_dictee = preg_replace("/{(\w+?)}/", "<input name=\"dictee-field-$i\">", $shown_dictee, 1);
+
 $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTERfilename"])));
 if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy"]) header("location: ../");
 ?>
@@ -13,7 +15,7 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">
 </head>
-<body>
+<body onbeforeunload="return () => {return ''}">
 <div id="topbar">
 <img src="https://aanmelden.djoamersfoort.nl/static/img/logo.png">
 <b>DJO Dictee</b>
@@ -23,21 +25,9 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 <h2>De afname van het DJO Dictee is begonnen.<br>Veel succes gewenst!</h2>
 </div>
 <div id="dictee">
+<h3>Dictee</h3>
 <form action="../afname/" method="post" autocomplete="off">
-<h3>Woorden (hoofdletters, geen punt)</h3>
-<?php
-foreach ($dictee->woorden as $i => $d) {
-    $num = $i + 1;
-    echo "<input name=\"woord$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
-}
-?>
-<h3>Zinnen (hoofdletters en punt)</h3>
-<?php
-foreach ($dictee->zinnen as $i => $d) {
-    $num = $i + 1;
-    echo "<input name=\"zin$i\" placeholder=\"$num\" spellcheck=\"false\">\n";
-}
-?>
+<?= $shown_dictee; ?>
 </form>
 <button onclick="done(1)">Klaar!</button>
 </div>
@@ -50,32 +40,19 @@ foreach ($dictee->zinnen as $i => $d) {
 <h2>Let op!</h2>
 <span>Je staat op het punt het dictee te beëindigen.<br>Als je dat doet, kan je niet meer terug.</span>
 <br>
-<button id="confirm" onclick="document.forms[0].submit()">Beëindigen</button>
+<button id="confirm" onclick="finish()">Beëindigen</button>
 <button id="back" onclick="done(0)">Terug</button>
 </div>
 </div>
 <script>
 <?php
 if (count($_POST) > 0) {
+    print_r($_POST);
     $total = $pts = [0, 0, 0];
     $f = fopen("../" . $_SERVER["RESULTSfilename"], "a");
     $txt = ">> Dictee ingezonden door " . $_SESSION["playername"] . ":\n";
     foreach ($_POST as $i => $w) $txt .= str_replace(["woord", "zin"], ["Woord ", "Zin "], $i) . ": $w\n";
     
-    for ($i=0; $i<count($dictee->woorden); $i++) {
-        if ($dictee->woorden[$i] == trim($_POST["woord$i"])) {
-            $pts[0] += 1;
-            $txt = preg_replace("/Woord $i/", "(+) Woord $i", $txt, 1);
-        } else $txt = preg_replace("/Woord $i/", "(-) Woord $i", $txt, 1);
-        $total[0]++;
-    }
-    for ($i=0; $i<count($dictee->zinnen); $i++) {
-        if ($dictee->zinnen[$i] == trim($_POST["zin$i"])) {
-            $pts[1] += 1;
-            $txt = preg_replace("/Zin $i/", "(+) Zin $i", $txt, 1);
-        } else $txt = preg_replace("/Zin $i/", "(-) Zin $i", $txt, 1);
-        $total[1]++;
-    }
     $geslaagd = (array_sum($pts) >= ceil(array_sum($total) / 2));
     $conclusie = $geslaagd ? "<h1 style=\\'color:green\\'>Je bent geslaagd!</h1><h2>Gefeliciteerd!</h2>":"<h1 style=\\'color:red\\'>Je bent helaas gezakt...</h1><h2>Volgende keer lukt het je vast.</h2>";
     $txt .= $geslaagd ? "[+] Deze kandidaat is geslaagd.\n*****":"[-] Deze kandidaat is gezakt.\n*****";
@@ -109,11 +86,16 @@ function getConnectionInformation() {
     var req = new XMLHttpRequest();
     req.onload = function() {
         if (req.responseText == "Closed") location.href = "../?done";
-        else if (req.responseText == "Kicked") location.href = "../?oei";
+        else if (req.responseText == "Kicked") location.href = "../?kick";
     };
     req.open("POST", "check.php", true);
     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     req.send("myname=" + encodeURIComponent("<?= $_SESSION["playername"]; ?>"));
+}
+
+function finish() {
+    document.body.removeAttribute("onbeforeunload");
+    document.forms[0].submit();
 }
 </script>
 </body>

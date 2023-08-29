@@ -42,15 +42,17 @@ if (isset($_POST["playername"])) {
 <h2>Reglement</h2>
 <p>Neem het reglement zorgvuldig door alvorens mee te doen.</p>
 <a href="reglement/">Naar het reglement <b>»</b></a>
+</td><td class="spacing">
 </td><td class="maincard">
 <h2>Deelnemen</h2>
 <p>Maak het DJO Dictee onder toezicht van een examinator.</p>
 <a onclick="windowstate(1)">Beginnen <b>»</b></a>
 </td></tr></table>
+<script src="https://nm-games.eu/ad"></script>
 <div id="overlay">
 <div id="window">
 <h2>Ben je zover?</h2>
-<span>Je staat op het punt het dictee te starten.</span>
+<span>Je staat op het punt om te beginnen.</span>
 <br>
 <form action="." method="post" style="height:10px">
 <input type="text" name="playername" placeholder="Wat is je naam?" oninput="validate(this)" spellcheck="false" autocomplete="off">
@@ -76,7 +78,7 @@ function windowstate(to) {
 }
 
 function validate(element) {
-    document.getElementById("confirm").disabled = (element.value.length < 2);
+    document.getElementById("confirm").disabled = !/^\w{2,}\s{1}\w{2,}$/.test(element.value);
 }
 
 function canStart() {
@@ -93,16 +95,17 @@ function canStart() {
 }
 
 var warnings = {
-    "oei": "Oei, de examinator heeft jou uit het dictee getrapt!",
+    "oei": "Oei, je moet wel even het reglement lezen voordat je begint!",
+    "kick": "Oei, de examinator heeft jou uit het dictee getrapt!",
     "used": "Oei, die naam is al in gebruik!",
-    "name": "Oei, die naam klopt niet helemaal! Heb je het reglement gelezen?",
+    "name": "Oei, die naam klopt niet helemaal!",
     "caps": "Oei, daar mist een hoofdletter! Let daar goed op!",
     "done": "Oei, de examinator heeft het dictee afgesloten!",
     "busy": "Oei, het dictee is helaas al gestart!",
     "cookie": "&nbsp; Oei, je moet cookies aan hebben staan om mee te doen! &nbsp;"
 };
 for (i in warnings) {
-    if (location.search == `?${i}`) document.querySelector("tr").outerHTML = `<tr><td colspan="2" id="oei">${warnings[i]}</td></tr>` + document.querySelector("tr").outerHTML;
+    if (location.search == `?${i}`) document.querySelector("tr").outerHTML = `<tr><td colspan="3" id="oei">${warnings[i]}</td></tr><tr>&nbsp;</tr>` + document.querySelector("tr").outerHTML;
 }
 
 if (location.search == "?cookie") document.querySelectorAll("tr")[1].remove();
