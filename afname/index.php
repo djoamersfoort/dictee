@@ -2,10 +2,15 @@
 session_start();
 if (!isset($_SESSION["can_enter"])) header("location: ../wachtkamer/");
 $dictee = $shown_dictee = file_get_contents("../" . $_SERVER["DICTEEfilename"]);
-for ($i=0; $i<substr_count($dictee, "{"); $i++) $shown_dictee = preg_replace("/{(\w+?)}/", "<input name=\"dictee-field-$i\">", $shown_dictee, 1);
+$shown_dictee = str_replace("\n", "<br>", $shown_dictee);
+$answer_keys = [];
+for ($i=0; $i<substr_count($dictee, "{"); $i++) {
+    preg_match("/{(.+?)}/", $shown_dictee, $matches);
+    array_push($answer_keys, $matches[1]);
+    $shown_dictee = preg_replace("/{(.+?)}/", "<input name=\"dictee-field-$i\">", $shown_dictee, 1);
+}
 
 $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTERfilename"])));
-if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy"]) header("location: ../");
 ?>
 <!DOCTYPE html>
 <html>
@@ -29,8 +34,12 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 <form action="../afname/" method="post" autocomplete="off">
 <?= $shown_dictee; ?>
 </form>
-<button onclick="done(1)">Klaar!</button>
 </div>
+<table style="width:50%"><tr><td class="maincard">
+<h2>Alles ingevuld?</h2>
+<p>Beëindig het dictee, lever het in en krijg vervolgens direct de uitslag!</p>
+<a onclick="done(1)">Dictee beëindigen <b>»</b></a>
+</td></tr></table>
 <footer>
 <span>Mede mogelijk gemaakt door <a href="https://kwabbelinc.nl" target="_blank">Kwabbel, Inc.</a> en <a href="https://nm-games.eu" target="_blank">N&amp;M Games</a>.
 <br>&copy; <?= date("Y"); ?> DJO Amersfoort. Alle rechten voorbehouden.</span>
@@ -46,21 +55,28 @@ if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy
 </div>
 <script>
 <?php
+if (!in_array($_SESSION["playername"], $register["players"]) or !$register["busy"]) echo "back();\n";
+
 if (count($_POST) > 0) {
-    print_r($_POST);
-    $total = $pts = [0, 0, 0];
+    $score = 0;
     $f = fopen("../" . $_SERVER["RESULTSfilename"], "a");
     $txt = ">> Dictee ingezonden door " . $_SESSION["playername"] . ":\n";
-    foreach ($_POST as $i => $w) $txt .= str_replace(["woord", "zin"], ["Woord ", "Zin "], $i) . ": $w\n";
+    $field_count = count($answer_keys);
+    for ($i=0; $i<$field_count; $i++) {
+        $w = $_POST["dictee-field-$i"];
+        $txt .= ($w == $answer_keys[$i]) ? "+ Veld $i: $w\n":"- Veld $i: $w\n";
+        if ($w == $answer_keys[$i]) $score++;
+    }
     
-    $geslaagd = (array_sum($pts) >= ceil(array_sum($total) / 2));
-    $conclusie = $geslaagd ? "<h1 style=\\'color:green\\'>Je bent geslaagd!</h1><h2>Gefeliciteerd!</h2>":"<h1 style=\\'color:red\\'>Je bent helaas gezakt...</h1><h2>Volgende keer lukt het je vast.</h2>";
+    $geslaagd = ($score >= ceil($field_count / 2));
+    $conclusie = $geslaagd ? "<h1 style=\\'color:lightgreen\\'>Je bent geslaagd!</h1><h2>Gefeliciteerd!</h2>":"<h1 style=\\'color:salmon\\'>Je bent helaas gezakt...</h1><h2>Volgende keer lukt het je vast.</h2>";
     $txt .= $geslaagd ? "[+] Deze kandidaat is geslaagd.\n*****":"[-] Deze kandidaat is gezakt.\n*****";
     $txt .= "\n\n";
     fwrite($f, $txt);
     fclose($f);
+    echo "document.body.removeAttribute('onbeforeunload');\n";
     echo "document.getElementById('mainhead').innerHTML = '$conclusie';\n";
-    echo "document.getElementById('dictee').innerHTML = '<h3>Je had $pts[0] van de $total[0] woorden goed.</h3><h3>Je had $pts[1] van de $total[1] zinnen goed.</h3><button onclick=\"location.href=\'../\'\">Terug</button>';";
+    echo "document.getElementById('dictee').innerHTML = '<h3><br>Je had $score van de $field_count woorden goed gespeld.</h3><h4>Voor inzage en bespreking van het dictee kun je bij je examinator terecht.</h4><button onclick=\"back()\">Terug</button>';";
 }
 ?>
 
@@ -85,8 +101,8 @@ setInterval(getConnectionInformation, 1000);
 function getConnectionInformation() {
     var req = new XMLHttpRequest();
     req.onload = function() {
-        if (req.responseText == "Closed") location.href = "../?done";
-        else if (req.responseText == "Kicked") location.href = "../?kick";
+        if (req.responseText == "Closed") back("../?done");
+        else if (req.responseText == "Kicked") back("../?kick");
     };
     req.open("POST", "check.php", true);
     req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -96,6 +112,11 @@ function getConnectionInformation() {
 function finish() {
     document.body.removeAttribute("onbeforeunload");
     document.forms[0].submit();
+}
+
+function back(to = "..") {
+    document.body.removeAttribute("onbeforeunload");
+    location.href = to;
 }
 </script>
 </body>

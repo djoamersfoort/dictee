@@ -19,22 +19,22 @@ if (isset($_GET["delresults"])) {
     if (!$open) $register["players"] = [];
     file_put_contents("../" . $_SERVER["REGISTERfilename"], json_encode($register));
     header("location: ../administratie/");
-// } elseif (isset($_GET["send"]) and filesize("../" . $_SERVER["RESULTSfilename"]) > 0) {
-//     $total = count($dictee->woorden) + count($dictee->zinnen);
-//     $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
-//     $json = [];
-//     $json_at = 0;
-//     while (!feof($f)) {
-//         $l = fgets($f);
-//         if (substr($l, 0, 2) == ">>") {
-//             $first_name = explode(" ", substr($l, 26, -1))[0];
-//             array_push($json, ["name" => $first_name, "score" => 0, "total" => $total]);
-//         } elseif (substr($l, 0, 3) == "(+)") $json[$json_at]["score"]++;
-//         elseif (substr($l, 0, 5) == "*****") $json_at++;
-//     }
-//     fclose($f);
-//     file_put_contents("../" . $_SERVER["APIfilename"], json_encode($json));
-//     header("location: ../administratie/");
+} elseif (isset($_GET["send"]) and filesize("../" . $_SERVER["RESULTSfilename"]) > 0) {
+    $total = substr_count($dictee, "{");
+    $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
+    $json = [];
+    $json_at = 0;
+    while (!feof($f)) {
+        $l = fgets($f);
+        if (substr($l, 0, 2) == ">>") {
+            $first_name = explode(" ", substr($l, 26, -1))[0];
+            array_push($json, ["name" => $first_name, "score" => 0, "total" => $total]);
+        } elseif ($l[0] == "+") $json[$json_at]["score"]++;
+        elseif (substr($l, 0, 5) == "*****") $json_at++;
+    }
+    fclose($f);
+    file_put_contents("../" . $_SERVER["APIfilename"], json_encode($json));
+    header("location: ../administratie/");
 }
 ?>
 <!DOCTYPE html>
@@ -63,12 +63,12 @@ if (isset($_GET["delresults"])) {
 <?= $register["busy"] ? '<button onclick="location.search=\'?open=0\'">Dictee vergrendelen</button>':'<button onclick="location.search=\'?open=1\'">Dictee vrijgeven</button>'; ?>
 
 <h3>Dictee</h3>
-<h4><i>Woorden tussen accolades zijn voor de kandidaten niet zichtbaar.</i></h4>
+<h4><?= $register["busy"] ? "Het dictee kan nu niet worden gewijzigd omdat het is vrijgegeven":"Woorden tussen accolades zijn voor de kandidaten niet zichtbaar"; ?>.</h4>
 <form action="../administratie/" method="post">
-<textarea name="dictee-contents" spellcheck="false">
+<textarea name="dictee-contents" spellcheck="false" <?= $register["busy"] ? "disabled":""; ?>>
 <?= htmlspecialchars($dictee); ?>
 </textarea>
-<button type="submit" name="bijwerken">Opslaan</button>
+<?= $register["busy"] ? "" : '<button type="submit" name="bijwerken">Opslaan</button>'; ?>
 </form>
 
 <?php
@@ -76,7 +76,7 @@ if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo "<h3>Resultaten</h3>
 $f = fopen("../" . $_SERVER["RESULTSfilename"], "r");
 while (!feof($f)) {
     $l = htmlspecialchars(fgets($f));
-    if (substr($l, 0, 8) == "&gt;&gt;") echo "<h3>" . substr($l, 8, -2) . "</h3>\n<pre><code>\n";
+    if (substr($l, 0, 8) == "&gt;&gt;") echo "<h4>" . substr($l, 8, -2) . "</h4>\n<pre><code>\n";
     elseif (substr($l, 0, 5) == "*****") echo "</pre></code>";
     else echo str_replace("\n", "<br>", $l);
 }

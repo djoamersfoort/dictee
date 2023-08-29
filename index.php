@@ -7,7 +7,7 @@ elseif (isset($_GET["cookie"]) and count($_COOKIE) >= 1) header("location: /");
 if (isset($_POST["playername"])) {
     $name = str_replace('"', '\"', $_POST["playername"]);
     $json = get_object_vars(json_decode(file_get_contents($_SERVER["REGISTERfilename"])));
-    preg_match("/^(\w+\s{1}\w+)/", $name, $matches);
+    preg_match("/^(.{2,}\s{1}.{2,})/", $name, $matches);
     if (in_array($name, $json["players"])) header("location: /?used");
     elseif ($json["busy"]) header("location: /?busy");
     elseif (count($matches) == 0) header("location: /?name");
@@ -46,7 +46,7 @@ if (isset($_POST["playername"])) {
 </td><td class="maincard">
 <h2>Deelnemen</h2>
 <p>Maak het DJO Dictee onder toezicht van een examinator.</p>
-<a onclick="windowstate(1)">Beginnen <b>»</b></a>
+<a onclick="windowstate(1)">&nbsp;</a>
 </td></tr></table>
 <script src="https://nm-games.eu/ad"></script>
 <div id="overlay">
@@ -64,6 +64,7 @@ if (isset($_POST["playername"])) {
 </div>
 <script>
 var busy;
+var seenRules = document.cookie.includes("REGLEMENT=1");
 
 window.addEventListener("keydown", function(e) {
     if (e.key == "Enter" && document.querySelector("#overlay input").value.length < 2) e.preventDefault();
@@ -71,14 +72,14 @@ window.addEventListener("keydown", function(e) {
 });
 
 function windowstate(to) {
-    if (busy) return;
+    if (busy || !seenRules) return;
     
     document.getElementById("overlay").style.display = (to) ? "block":"none";
     if (to) document.querySelector("#overlay #window input").focus();
 }
 
 function validate(element) {
-    document.getElementById("confirm").disabled = !/^\w{2,}\s{1}\w{2,}$/.test(element.value);
+    document.getElementById("confirm").disabled = !/^.{2,}\s{1}.{2,}$/.test(element.value);
 }
 
 function canStart() {
@@ -86,8 +87,8 @@ function canStart() {
     req.onload = function() {
         if (this.status == 200) {
             busy = JSON.parse(this.responseText).busy;
-            document.querySelector('[onclick="windowstate(1)"]').className = (busy) ? "disabled" : "";
-            document.querySelector('[onclick="windowstate(1)"]').innerHTML = (busy) ? "Dictee reeds gestart" : "Beginnen »";
+            document.querySelector('[onclick="windowstate(1)"]').className = (busy || !seenRules) ? "disabled" : "";
+            document.querySelector('[onclick="windowstate(1)"]').innerHTML = (busy) ? "Dictee is al gestart" : (!seenRules) ? "Reglement nog niet gelezen" : "Beginnen <b>»</b>";
         }
     };
     req.open("GET", "<?= $_SERVER["REGISTERfilename"]; ?>", true);
@@ -95,7 +96,6 @@ function canStart() {
 }
 
 var warnings = {
-    "oei": "Oei, je moet wel even het reglement lezen voordat je begint!",
     "kick": "Oei, de examinator heeft jou uit het dictee getrapt!",
     "used": "Oei, die naam is al in gebruik!",
     "name": "Oei, die naam klopt niet helemaal!",
