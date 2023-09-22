@@ -35,7 +35,7 @@ if (isset($_POST["playername"])) {
 <a href="examinator/">Ik ben examinator</a>
 </div>
 <div id="mainhead">
-<h1>Hallo beste DJO-er!</h1>
+<h1>Hallo beste DJO'er!</h1>
 <h2>Je kunt hier deelnemen aan het officiële DJO-dictee.<br>Succes!</h2>
 </div>
 <table><tr><td class="maincard">
