@@ -1,17 +1,28 @@
+:root {
+    --theme-color: #593196;
+    --theme-color-lighter: #A991D4;
+
+    --background: #1F1F1F;
+    --little-darker-background: #1A1A1A;
+    --text-color: white;
+}
+
 body {
     margin: 0;
     font-family: Segoe UI, sans-serif;
+    background-color: var(--background);
+    color: var(--text-color);
 }
 #topbar {
-    background-color: #593196;
+    background-color: var(--theme-color);
     height: 100px;
+    user-select: none;
 }
 #topbar img {
     height: 80px;
     margin: 10px;
 }
 #topbar b {
-    color: white;
     position: relative;
     bottom: 43px;
     left: 20px;
@@ -19,13 +30,12 @@ body {
 }
 #topbar a {
     float: right;
-    margin: 35px;
+    margin: 37px;
     font-size: 19px;
     text-decoration: none;
-    color: #A991D4;
 }
 #mainhead, footer {
-    background-color: #F9F8FC;
+    background-color: var(--little-darker-background);
     padding: 30px;
 }
 #mainhead h1, #mainhead h2, #dictee h1 {
@@ -39,38 +49,45 @@ body {
     font-size: 1.5em;
 }
 a, a:visited {
-    color: #593196;
+    color: var(--theme-color-lighter);
     transition: .25s ease;
 }
 table {
-    margin: 2% auto auto auto;
+    margin: 2% auto;
+}
+.spacing {
+    width: 2%;
 }
 .maincard {
     text-align: center;
-    border: 1px solid #593196;
+    border: 1px solid var(--theme-color);
     width: 40%;
-    padding: 0;
+    margin: 0 12px;
+    padding: 4px;
+    border-radius: 12px;
 }
 .maincard a {
     display: block;
-    background-color: #593196;
+    background-color: var(--theme-color);
     text-decoration: none;
-    color: white;
+    color: var(--text-color);
     margin-top: 50px;
     font-size: 18px;
     padding: 6px;
+    border-radius: 4px 4px 10px 10px;
 }
 .maincard a:focus {
-    box-shadow: 0 0 8px #593196;
+    box-shadow: 0 0 8px var(--theme-color);
 }
 .maincard a.disabled {
     background-color: #aaa;
 }
 #oei {
-    background-color: red;
-    color: white;
+    background-color: darkred;
     text-align: center;
-    padding: 6px 0;
+    padding: 12px 0;
+    border-radius: 12px;
+    font-size: 20px;
 }
 
 #dictee {
@@ -80,39 +97,60 @@ table {
 #dictee p {
     margin-left: 20px;
 }
-#dictee h3 {
+#dictee h4 {
     font-weight: normal;
+    font-style: italic;
+    margin: -4px 0 8px 0;
+}
+#dictee img {
+    margin: 7.5% auto;
+    display: block;
+    user-select: none;
+    pointer-events: none;
 }
 #dictee li a, #dictee h3 a {
     margin-left: 20px;
     padding: 0 8px;
 }
-#dictee input {
+#dictee input, #dictee textarea {
+    width: 125px;
+    background-color: transparent;
     font-family: Segoe UI, sans-serif;
-    width: 100%;
-    font-size: 16px;
-    padding: 3px 0;
+    border: 1px solid var(--text-color);
+    outline: none;
+    color: inherit;
+    font-size: 17px;
     margin-bottom: 4px;
+    border-radius: 4px;
+}
+#dictee input.full-width {
+    width: 100%;
+    font-size: 18px;
+    padding: 6px;
 }
 #dictee input.with-button {
     width: calc(100% - 50px);
 }
-#dictee button {
+#dictee textarea {
+    resize: none;
     width: 100%;
+    height: 230px;
+}
+#dictee button {
+    width: 102%;
     margin: 40px 0;
     padding: 8px;
-    background-color: #593196;
-    color: white;
+    background-color: var(--theme-color);
+    color: var(--text-color);
     font-size: 2em;
     outline: none;
-    border: 1px solid black;
-    border-radius: 4px;
+    border: none;
+    border-radius: 8px;
     transition: .25s ease;
 }
-#dictee button:not(:disabled):hover, #overlay #window button:hover, a:not(.disabled):hover {
+#dictee button:not(:disabled):hover, #overlay #window button:not(:disabled):hover, a:not(.disabled):hover {
     filter: brightness(1.2);
     cursor: pointer;
-    text-decoration: none;
 }
 #dictee button:disabled {
     background-color: #aaa;
@@ -125,6 +163,7 @@ footer span {
 #overlay {
     display: none;
     background-color: rgba(0,0,0,.6);
+    backdrop-filter: blur(6px);
     width: 100%;
     height: 100%;
     position: absolute;
@@ -136,7 +175,8 @@ footer span {
     position: absolute;
     left: calc(50% - 200px);
     top: calc(50% - 120px);
-    background-color: #F9F8FC;
+    background-color: var(--little-darker-background);
+    border-radius: 12px;
 }
 #overlay #window h2, #overlay #window span {
     width: fit-content;
@@ -145,11 +185,11 @@ footer span {
 }
 #overlay #window button {
     font-size: 20px;
-    color: white;
-    margin-left: 40px;
+    margin-left: 44px;
     padding: 8px 30px;
-    background-color: #593196;
-    border: 1px solid black;
+    border: none;
+    background-color: var(--theme-color);
+    color: inherit;
     border-radius: 4px;
     transition: .25s ease;
 }
@@ -157,15 +197,21 @@ footer span {
     background-color: #aaa;
 }
 #overlay #window input {
+    background-color: transparent;
+    border: 1px solid var(--text-color);
+    border-radius: 4px;
+    outline: none;
+    font-size: 20px;
+    padding: 4px;
+    color: inherit;
+    font-family: inherit;
     width: calc(100% - 100px);
     position: relative;
     left: 44px;
     bottom: 23px;
-    font-size: 17px;
-    padding: 2px;
 }
 pre {
-    background-color: #F9F8FC;
+    background-color: var(--little-darker-background);
     border: 1px solid black;
     border-radius: 8px;
     padding-bottom: 1.25em;

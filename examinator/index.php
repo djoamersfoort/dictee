@@ -1,5 +1,10 @@
 <?php
 session_start();
+if (isset($_SESSION["access_permitted"])) {
+    header("location: ../administratie");
+    exit();
+}
+
 if (isset($_POST["toegangscode"])) {
     if ($_POST["toegangscode"] == $_SERVER["passcode"]) {
         $_SESSION["access_permitted"] = true;
@@ -28,8 +33,8 @@ if (isset($_POST["toegangscode"])) {
 <div id="dictee">
 <h3>Toegangscode:</h3>
 <form action="../examinator/" method="post">
-<input type="password" name="toegangscode" placeholder="Toegangscode" required>
-<button type="submit">Verifiëer code</button>
+<input type="password" name="toegangscode" placeholder="Toegangscode" class="full-width" autofocus required>
+<button type="submit">Verifieer code</button>
 <?= $err; ?>
 </form>
 </body>
