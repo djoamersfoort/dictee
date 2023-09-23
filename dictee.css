@@ -148,7 +148,7 @@ table {
     border-radius: 8px;
     transition: .25s ease;
 }
-#dictee button:not(:disabled):hover, #overlay #window button:hover, a:not(.disabled):hover {
+#dictee button:not(:disabled):hover, #overlay #window button:not(:disabled):hover, a:not(.disabled):hover {
     filter: brightness(1.2);
     cursor: pointer;
 }

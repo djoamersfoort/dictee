@@ -14,12 +14,13 @@ De website is te vinden op https://dictee.djoamersfoort.nl.
 
 ## Hoe verloopt deelname?
 1. Je gaat naar de site, zie [Waar te vinden?](#waar-te-vinden)
-2. Klik bij **Deelnemen** op **Beginnen »**.
-3. Vul je naam in en klik op **Beginnen**.
-4. Wacht totdat de examinator het dictee start en je kan beginnen.
-5. Vul de woorden en zinnen in die je van je examinator te horen krijgt.
-6. Controleer nog één keer zorgvuldig of je alles goed ingevoerd hebt.
-7. Stuur het dictee in. Het wordt automatisch nagekeken, dus je ziet direct of je geslaagd bent.
+2. Lees het reglement zorgvuldig door!
+3. Klik bij **Deelnemen** op **Beginnen »**.
+4. Vul je naam in en klik op **Beginnen**.
+5. Wacht totdat de examinator het dictee start en je kunt beginnen.
+6. Vul de weggelaten woorden in die je van je examinator te horen krijgt.
+7. Controleer nog één keer zorgvuldig of je alles goed ingevoerd hebt.
+8. Stuur het dictee in. Het wordt automatisch nagekeken, dus je ziet direct of je geslaagd bent.
 
 ## Wat krijg ik ervoor?
 Als je slaagt, dan krijg je het DJO Dictee Certificaat van je examinator.  

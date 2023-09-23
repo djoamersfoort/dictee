@@ -75,6 +75,8 @@ function windowstate(to) {
     if (busy || !seenRules) return;
     
     document.getElementById("overlay").style.display = (to) ? "block":"none";
+    document.getElementById("overlay").style.top = `${scrollY}px`;
+    document.body.style.overflow = (to) ? "hidden":"";
     if (to) document.querySelector("#overlay #window input").focus();
 }
 

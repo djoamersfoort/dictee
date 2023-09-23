@@ -37,7 +37,7 @@ $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGI
 </div>
 <table style="width:50%"><tr><td class="maincard">
 <h2>Alles ingevuld?</h2>
-<p>Beëindig het dictee, lever het in en krijg vervolgens direct de uitslag!</p>
+<p>Lever dan het dictee in. Je krijgt vervolgens direct de uitslag!</p>
 <a onclick="done(1)">Dictee beëindigen <b>»</b></a>
 </td></tr></table>
 <footer>
@@ -47,7 +47,7 @@ $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGI
 <div id="overlay">
 <div id="window">
 <h2>Let op!</h2>
-<span>Je staat op het punt het dictee te beëindigen.<br>Als je dat doet, kan je niet meer terug.</span>
+<span>Je staat op het punt het dictee te beëindigen.<br>Als je dat doet, kun je niet meer terug.</span>
 <br>
 <button id="confirm" onclick="finish()">Beëindigen</button>
 <button id="back" onclick="done(0)">Terug</button>

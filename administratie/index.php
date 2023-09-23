@@ -89,7 +89,7 @@ if (filesize("../" . $_SERVER["RESULTSfilename"]) > 0) echo '<button onclick="do
 <h2>Let op!</h2>
 <span>Weet je echt zeker dat je alle resultaten wilt wissen?
     <?= (strlen(file_get_contents("../" . $_SERVER["APIfilename"])) > 2) ? "<br>Hiermee wis je ook de gegevens voor de lichtkrant." : ""; ?>
-    <br>Je kan dat niet meer ongedaan maken!
+    <br>Je kunt dat niet meer ongedaan maken!
 </span>
 <br>
 <button id="confirm" onclick="location.search='?delresults'">Ja</button>
