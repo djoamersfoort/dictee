@@ -65,9 +65,10 @@ if (isset($_GET["delresults"])) {
 <h3>Dictee</h3>
 <h4><?= $register["busy"] ? "Het dictee kan nu niet worden gewijzigd omdat het is vrijgegeven":"Woorden tussen accolades zijn voor de kandidaten niet zichtbaar"; ?>.</h4>
 <form action="../administratie/" method="post">
-<textarea name="dictee-contents" spellcheck="false" <?= $register["busy"] ? "disabled":""; ?>>
+<textarea name="dictee-contents" spellcheck="false" oninput="validateInput(event)" <?= $register["busy"] ? "disabled":""; ?>>
 <?= htmlspecialchars($dictee); ?>
 </textarea>
+<h4 id="dictee-content-status"></h4>
 <?= $register["busy"] ? "" : '<button type="submit" name="bijwerken">Opslaan</button>'; ?>
 </form>
 
@@ -117,6 +118,21 @@ function done(mode) {
     if (mode) scrollTo(0, 0);
 }
 
+function validateInput(e) {
+    var openWords = e.target.value.match(/\{(.+?)\}/g);
+    var openWordCount = (openWords) ? openWords.length : 0;
+    var curlyBracesOpen = e.target.value.match(/\{/g) ? e.target.value.match(/\{/g).length : 0;
+    var curlyBracesClose = e.target.value.match(/\}/g) ? e.target.value.match(/\}/g).length : 0;
+    var output = `De kandidaten moeten in dit dictee ${openWordCount} ${(openWordCount == 1) ? "antwoord":"antwoorden"} geven`;
+    if (curlyBracesOpen != curlyBracesClose) output += ", maar je syntax is niet helemaal lekker.";
+    else if (openWordCount == 0) output += ". Waar is het dictee nou gebleven?";
+    else output += ".";
+    
+    document.getElementById("dictee-content-status").textContent = output;
+    document.querySelector('button[name="bijwerken"]').disabled = (openWordCount == 0 || curlyBracesOpen != curlyBracesClose);
+}
+
+validateInput({target: {value: document.querySelector("textarea").textContent}});
 getPlayerInformation();
 setInterval(getPlayerInformation, 1000);
 
