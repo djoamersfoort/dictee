@@ -1,5 +1,5 @@
 <?php
-setcookie("REGLEMENT", "1", time() + 86400 * 180, "/");
+setcookie("REGLEMENT", "1", time() + 86400 * 5, "/");
 ?>
 <!DOCTYPE html>
 <html>
