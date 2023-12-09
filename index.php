@@ -1,6 +1,5 @@
 <?php
 session_start();
-setcookie("TEST", "1", time() + 86400 * 365, "/");
 if (!isset($_GET["cookie"]) and count($_COOKIE) < 1) header("location: /?cookie");
 elseif (isset($_GET["cookie"]) and count($_COOKIE) >= 1) header("location: /");
 
