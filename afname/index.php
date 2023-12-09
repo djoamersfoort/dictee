@@ -7,7 +7,7 @@ $answer_keys = [];
 for ($i=0; $i<substr_count($dictee, "{"); $i++) {
     preg_match("/{(.+?)}/", $shown_dictee, $matches);
     array_push($answer_keys, $matches[1]);
-    $shown_dictee = preg_replace("/{(.+?)}/", "<input name=\"dictee-field-$i\">", $shown_dictee, 1);
+    $shown_dictee = preg_replace("/{(.+?)}/", "<input name=\"dictee-field-$i\" autocomplete=\"off\" spellcheck=\"false\">", $shown_dictee, 1);
 }
 
 $register = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTERfilename"])));
