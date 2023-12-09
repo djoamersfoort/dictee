@@ -103,10 +103,11 @@ table {
     margin: -4px 0 8px 0;
 }
 #dictee img {
-    margin: 7.5% auto;
+    margin: 16px auto;
     display: block;
     user-select: none;
     pointer-events: none;
+    border-radius: 4px;
 }
 #dictee li a, #dictee h3 a {
     margin-left: 20px;
@@ -130,6 +131,13 @@ table {
 }
 #dictee input.with-button {
     width: calc(100% - 50px);
+}
+#dictee input.tester {
+    width: 628px;
+    display: block;
+    margin: 16px auto;
+    font-size: 18px;
+    padding: 6px;
 }
 #dictee textarea {
     resize: none;

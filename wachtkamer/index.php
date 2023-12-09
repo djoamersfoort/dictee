@@ -21,6 +21,7 @@ $json = get_object_vars(json_decode(file_get_contents("../" . $_SERVER["REGISTER
 <h2>Wacht hier totdat de examinator het DJO Dictee start.</h2>
 </div>
 <div id="dictee">
+<input class="tester" placeholder="Controleer hier of je toetsenbord naar behoren functioneert!" autocomplete="off" spellcheck="false" autofocus>
 <img src="https://media.tenor.com/2WtBkf2YI00AAAAd/bean-mr.gif">
 </div>
 <script>
