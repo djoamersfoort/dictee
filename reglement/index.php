@@ -29,6 +29,7 @@ setcookie("REGLEMENT", "1", time() + 86400 * 180, "/");
 <li>Het is verplicht om het dictee af te leggen met een door Kwabbel, Inc. erkende examinator.</li>
 <li>Het is verplicht om het dictee af te leggen op een door N&amp;M Games goedgekeurd apparaat.</li>
 <li>Het is verplicht om eerlijk je voor- én achternaam op te geven.</li>
+<li>Het is verplicht om de browser waarin het dictee wordt afgenomen in volledig scherm te zetten.</li>
 <li>Het is niet toegestaan om af te kijken of te spieken bij andere deelnemers.</li>
 <li>Het is niet toegestaan om spellingscontrole te gebruiken.</li>
 <li>Het is niet toegestaan om hulp te vragen van een ander, ongeacht of deze deelneemt aan het dictee of niet.</li>
