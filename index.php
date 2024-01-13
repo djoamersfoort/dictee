@@ -22,7 +22,7 @@ if (isset($_POST["playername"])) {
 <!DOCTYPE html>
 <html>
 <head>
-<title>DJO Amersfoort | Officieel dictee</title>
+<title>DJO Amersfoort | Officiële examens</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="../dictee.css" type="text/css">
 <link rel="shortcut icon" href="https://aanmelden.djoamersfoort.nl/static/img/logo.png" type="image/x-icon">
@@ -30,21 +30,21 @@ if (isset($_POST["playername"])) {
 <body>
 <div id="topbar">
 <img src="https://aanmelden.djoamersfoort.nl/static/img/logo.png">
-<b>DJO Dictee</b>
-<a href="examinator/">Ik ben examinator</a>
+<b>DJO Examens</b>
+<a href="examinator/">Ik ben examensecretaris</a>
 </div>
 <div id="mainhead">
 <h1>Hallo beste DJO'er!</h1>
-<h2>Je kunt hier deelnemen aan het officiële DJO-dictee.<br>Succes!</h2>
+<h2>Je kunt hier deelnemen aan de officiële DJO-examens.<br>Succes!</h2>
 </div>
 <table><tr><td class="maincard">
-<h2>Reglement</h2>
-<p>Neem het reglement zorgvuldig door alvorens mee te doen.</p>
-<a href="reglement/">Naar het reglement <b>»</b></a>
+<h2>Examenreglement</h2>
+<p>Neem het examenreglement zorgvuldig door alvorens mee te doen.</p>
+<a href="examenreglement/">Naar het examenreglement <b>»</b></a>
 </td><td class="spacing">
 </td><td class="maincard">
 <h2>Deelnemen</h2>
-<p>Maak het DJO Dictee onder toezicht van een examinator.</p>
+<p>Helemaal voorbereid? Leg hier een DJO-examen af.</p>
 <a onclick="windowstate(1)">&nbsp;</a>
 </td></tr></table>
 <script src="https://nm-games.eu/ad"></script>
