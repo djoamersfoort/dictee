@@ -1,11 +1,12 @@
 :root {
-    --epic-gradient-text: radial-gradient(at 47% -56%, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
+    --epic-gradient-fg: radial-gradient(at 47% -56%, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
         linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
     --epic-gradient-bg: linear-gradient(1deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
         radial-gradient(at 44vw 200vh, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
         linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
 
     --spacing: 1rem;
+    --dialog-spacing: 3rem;
 }
 
 @keyframes introduction {
@@ -42,6 +43,7 @@ body {
       "Why Experiences Experiences"
       "Footer Footer Footer";
     grid-template-rows: 0fr 2fr 2fr 0fr;
+    grid-template-columns: 1fr 0.5fr 1fr;
 
     & > div {
         animation-name: introduction;
@@ -71,6 +73,7 @@ body {
     }
     a {
         color: inherit;
+        height: fit-content;
     }
 }
 .footer {
@@ -84,6 +87,9 @@ body {
             text-decoration: none;
         }
     }
+    p {
+        margin: 0.5em;
+    }
 }
 
 .card {
@@ -92,6 +98,57 @@ body {
     &.Participate {
         grid-area: Participate;
         animation-delay: 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        div {
+            flex-basis: 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            gap: 3rem;
+
+            h2 span.red {
+                color: salmon;
+            }
+            h2 span.green {
+                color: lightgreen;
+            }
+            button {
+                width: 100%;
+                padding: 8px 0;
+                font-family: inherit;
+                font-size: 2em;
+                font-weight: 800;
+                font-style: italic;
+                text-transform: uppercase;
+                color: inherit;
+                background: var(--epic-gradient-fg);
+                border: none;
+                outline: none;
+                border-radius: var(--spacing);
+                transition: 0.5s ease;
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: var(--spacing);
+                cursor: pointer;
+
+                &:hover {
+                    filter: brightness(1.1);
+                }
+                img {
+                    height: 36px;
+                    transition: inherit;
+                }
+                &:hover img {
+                    transform: translateX(16px);
+                }
+            }
+        }
     }
     &.How {
         grid-area: How;
@@ -123,7 +180,7 @@ body {
             flex-direction: column;
             justify-content: space-between;
             & > * {
-                margin: 8px;
+                margin: var(--spacing);
             }
         }
     }
@@ -147,4 +204,51 @@ h1, h3 {
 h3 {
     font-size: 2em;
     margin: 0.5em;
+}
+
+#overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 110vw;
+    height: 110vh;
+    z-index: 2;
+    pointer-events: none;
+    background-color: #000c;
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: 0.75s ease;
+}
+
+.dialog {
+    position: absolute;
+    opacity: 0;
+    background-color: #fff2;
+    border-radius: var(--dialog-spacing);
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 3;
+
+    h1 {
+        text-align: center;
+        font-size: 4em;
+        margin: 0.5em 0;
+    }
+    h3 {
+        text-align: center;
+        margin-bottom: 1.2em;
+    }
+
+    .rules {
+        width: 60%;
+        margin: auto;
+
+        h4 {
+            font-size: 1.2em;
+            margin: 0.5em 0;
+        }
+        ol ol {
+            list-style: lower-latin;
+        }
+    }
 }
