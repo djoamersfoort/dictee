@@ -137,15 +137,20 @@ body {
                 gap: var(--spacing);
                 cursor: pointer;
 
-                &:hover {
+                &:not(:disabled):hover {
                     filter: brightness(1.1);
+
+                    img {
+                        transform: translateX(16px);
+                    }
+                }
+                &:disabled {
+                    filter: grayscale(1);
+                    cursor: unset;
                 }
                 img {
                     height: 36px;
                     transition: inherit;
-                }
-                &:hover img {
-                    transform: translateX(16px);
                 }
             }
         }
