@@ -1,0 +1,150 @@
+:root {
+    --epic-gradient-text: radial-gradient(at 47% -56%, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
+        linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
+    --epic-gradient-bg: linear-gradient(1deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
+        radial-gradient(at 44vw 200vh, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
+        linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
+
+    --spacing: 1rem;
+}
+
+@keyframes introduction {
+    from {
+        opacity: 0;
+        transform: translateY(3rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background: var(--epic-gradient-bg);
+    font-family: Montserrat, sans-serif;
+    line-height: 1.25;
+    color: #fff;
+}
+
+.container {
+    display: grid;
+    gap: var(--spacing);
+    width: calc(100% - var(--spacing) * 2);
+    height: calc(100% - var(--spacing) * 2);
+    margin: var(--spacing);
+    grid-template-areas:
+      "Heading Heading Heading"
+      "Participate Participate How"
+      "Why Experiences Experiences"
+      "Footer Footer Footer";
+    grid-template-rows: 0fr 2fr 2fr 0fr;
+
+    & > div {
+        animation-name: introduction;
+        animation-duration: 2s;
+        animation-fill-mode: backwards;
+    }
+}
+
+.heading {
+    grid-area: Heading;
+    display: flex;
+    justify-content: space-between;
+    height: 100px;
+    
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing);
+        img {
+            height: 5em;
+        }
+        h1 {
+            margin: 0;
+            color: #fff;
+            font-size: 5em;
+        }
+    }
+    a {
+        color: inherit;
+    }
+}
+.footer {
+    grid-area: Footer;
+    text-align: center;
+    animation-delay: 1s;
+
+    a {
+        color: inherit;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+}
+
+.card {
+    background-color: #fff2;
+    border-radius: var(--spacing);
+    &.Participate {
+        grid-area: Participate;
+        animation-delay: 0.2s;
+    }
+    &.How {
+        grid-area: How;
+        animation-delay: 0.4s;
+    }
+    &.Why {
+        grid-area: Why;
+        animation-delay: 0.6s;
+    }
+    &.Experiences {
+        grid-area: Experiences;
+        animation-delay: 0.8s;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .subcards-grid {
+        flex-basis: 80%;
+        display: grid;
+        height: -webkit-fill-available;
+        grid-template-columns: auto auto;
+        margin: var(--spacing);
+        gap: var(--spacing);
+
+        & > div {
+            background-color: #fff2;
+            border-radius: var(--spacing);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            & > * {
+                margin: 8px;
+            }
+        }
+    }
+    .rating {
+        display: flex;
+    }
+    & > * {
+        margin: var(--spacing);
+    }
+}
+
+h1, h3 {
+    font-style: italic;
+    text-transform: uppercase;
+    font-weight: 800;
+    overflow: hidden;
+    line-height: 1;
+    padding: 0 4px; /* prevent cutoffs at first/last char */
+}
+
+h3 {
+    font-size: 2em;
+    margin: 0.5em;
+}
