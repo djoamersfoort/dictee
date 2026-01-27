@@ -4,8 +4,8 @@ const overlay = document.getElementById("overlay");
 
 const dialog = {
     element: document.querySelector(".dialog"),
-    /** @type {{id: string, rect: DOMRect | null}} */
-    current: {id: "", rect: null},
+    /** @type {{id: string, element: HTMLElement | null}} */
+    current: {id: "", element: null},
     fadetime: 600,
     /**
      * @param {string} id
@@ -36,7 +36,7 @@ const dialog = {
             overlay.style.opacity = "1";
 
             this.current.id = id;
-            this.current.rect = rect;
+            this.current.element = startTarget;
             this.element.querySelector(`#${id}`).style.display = "block";
             setTimeout(() => {
                 this.element.querySelector(`#${id}`).style.opacity = "1";
@@ -57,14 +57,17 @@ const dialog = {
     close() {
         this.element.querySelector(`#${this.current.id}`).style.opacity = "0";
         setTimeout(() => {
+            const rect = this.current.element.getBoundingClientRect();
+
             this.element.querySelector(`#${this.current.id}`).style.display = "none";
             this.current.id = "";
+            this.current.element = null;
 
             this.element.style.opacity = "0";
-            this.element.style.width = `${this.current.rect.width}px`;
-            this.element.style.height = `${this.current.rect.height}px`;
-            this.element.style.left = `${this.current.rect.left}px`;
-            this.element.style.top = `${this.current.rect.top}px`;
+            this.element.style.width = `${rect.width}px`;
+            this.element.style.height = `${rect.height}px`;
+            this.element.style.left = `${rect.left}px`;
+            this.element.style.top = `${rect.top}px`;
 
             overlay.style.opacity = "0";
 

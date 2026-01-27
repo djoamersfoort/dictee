@@ -48,18 +48,29 @@ body {
     width: calc(100% - var(--spacing) * 2);
     height: calc(100% - var(--spacing) * 2);
     margin: var(--spacing);
-    grid-template-areas:
-      "Heading Heading Heading"
-      "Participate Participate How"
-      "Why Experiences Experiences"
-      "Footer Footer Footer";
-    grid-template-rows: 0fr 2fr 2fr 0fr;
-    grid-template-columns: 1fr 0.5fr 1fr;
 
     & > div {
         animation-name: introduction;
         animation-duration: 2s;
         animation-fill-mode: backwards;
+    }
+    &.Home {
+        grid-template-areas:
+        "Heading Heading Heading"
+        "Participate Participate How"
+        "Why Experiences Experiences"
+        "Footer Footer Footer";
+        grid-template-rows: 0fr 2fr 2fr 0fr;
+        grid-template-columns: 1fr 0.5fr 1fr;
+    }
+    &.Examiner {
+        grid-template-areas:
+        "Heading Heading"
+        "Contents Participants"
+        "Contents Status"
+        "Footer Footer";
+        grid-template-rows: 0fr 2fr 1fr 0fr;
+        grid-template-columns: 2fr 1fr;
     }
 }
 
@@ -82,24 +93,22 @@ body {
             font-size: 5em;
         }
     }
-    a {
-        color: inherit;
-        height: fit-content;
-    }
 }
 .footer {
     grid-area: Footer;
     text-align: center;
     animation-delay: 1s;
 
-    a {
-        color: inherit;
-        &:hover {
-            text-decoration: none;
-        }
-    }
     p {
         margin: 0.5em;
+    }
+}
+.heading a, .footer a {
+    color: inherit;
+    height: fit-content;
+
+    &:hover {
+        text-decoration: none;
     }
 }
 
@@ -147,6 +156,19 @@ body {
         animation-delay: 0.8s;
         display: flex;
         flex-direction: column;
+    }
+
+    &.Contents {
+        grid-area: Contents;
+        animation-delay: 0.3s;
+    }
+    &.Participants {
+        grid-area: Participants;
+        animation-delay: 0.5s;
+    }
+    &.Status {
+        grid-area: Status;
+        animation-delay: 0.7s;
     }
 
     .subcards-grid {
@@ -354,5 +376,21 @@ fieldset {
                 height: 24px;
             }
         }
+    }
+}
+noscript .dialog {
+    opacity: 1;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    background-color: #000c;
+    border-radius: 0;
+    backdrop-filter: grayscale(1) blur(8px);
+    justify-content: center;
+
+    * {
+        display: block;
+        opacity: inherit;
     }
 }

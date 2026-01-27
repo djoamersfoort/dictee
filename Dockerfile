@@ -1,10 +1,12 @@
 FROM oven/bun:latest
 
+WORKDIR /dictee
+
 COPY package.json ./
 COPY bun.lock ./
-COPY index.ts ./
-COPY src ./src
+COPY app ./app
+COPY static ./static
 
 RUN bun install
 
-CMD ["bun", "run", "./index.ts"]
+CMD ["bun", "run", "./app/index.ts"]
