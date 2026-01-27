@@ -23,10 +23,10 @@
             <div class="card Participate">
                 <h3>Deelnemen</h3>
                 <div>
-                    <h2 id="participation-state">Op dit moment is er <span class="red">geen</span> dictee beschikbaar.</h2>
+                    <h2 id="participation-state">Aan het controleren...</h2>
                     <button id="participate" disabled>
                         <span>Deelnemen!</span>
-                        <img src="./icons/arrow-right.svg" alt="Go!">
+                        <img src="./icons/arrow-right.svg" alt="Go!" class="img-r">
                     </button>
                 </div>
             </div>
@@ -111,11 +111,11 @@
 
         <div id="overlay"></div>
 
-        <div class="dialog" id="rules-signup">
-            <div class="dialog-wrapper">
-                <h1>Reglement</h1>
+        <div class="dialog">
+            <div id="rules">
+                <h1 class="dictee-fg">Reglement</h1>
                 <h3>Lees het reglement zorgvuldig door.</h3>
-                <div class="rules">
+                <div class="dialog-text">
                     <h4>1. Definities</h4>
                     <ol>
                         <li>In dit reglement hebben de volgende woorden de in dit artikel genoemde betekenis:</li>
@@ -189,6 +189,43 @@
                         <li>In gevallen waarin dit reglement niet (direct) voorziet, beslist de examinator.</li>
                         <li>De examinator behoudt zich het recht voor om dit reglement op ieder moment, niet zijnde tijdens een dictee, te wijzigen.</li>
                     </ol>
+
+                    <div class="dialog-buttons">
+                        <button id="rules-disagree" class="red-bg">
+                            <img src="./icons/x.svg" alt="Nuh-uh" class="img-l">
+                            <span>Ik ga niet akkoord</span>
+                        </button>
+                        <button id="rules-agree" class="green-bg">
+                            <span>Ik ga akkoord!</span>
+                            <img src="./icons/arrow-right.svg" alt="Go!" class="img-r">
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="name-inputs">
+                <h1 class="dictee-fg">Bijna klaar!</h1>
+                <h3>Vul alleen nog even je naam in.</h3>
+                <div class="dialog-inputs">
+                    <fieldset>
+                        <legend>Voornaam</legend>
+                        <input id="first-name">
+                    </fieldset>
+                    <fieldset>
+                        <legend>Achternaam</legend>
+                        <input id="last-name">
+                    </fieldset>
+                    <h4 id="name-error" class="red-fg">&nbsp;</h4>
+                    <div class="dialog-buttons">
+                        <button id="names-back" class="red-bg">
+                            <img src="./icons/arrow-right.svg" alt="Back" class="img-r rot180">
+                            <span>Terug</span>
+                        </button>
+                        <button id="names-confirm" class="green-bg">
+                            <span>Meedoen!</span>
+                            <img src="./icons/arrow-right.svg" alt="Go!" class="img-r">
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
