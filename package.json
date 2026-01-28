@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@types/express": "^5.0.6",
-    "express": "^5.2.1"
+    "@types/express-session": "^1.18.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
   }
 }

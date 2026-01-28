@@ -7,11 +7,11 @@ export const verifyAccount = async (base64auth: string) => {
             if (err) rej(err.message);
 
             const accounts = JSON.parse(new TextDecoder().decode(txt));
-            const authToken = /^(Basic )?(.*)$/.exec(base64auth) as string[];
-            const [username, password] = atob(authToken[2] as string).split(":") as string[];
-            const valid = Bun.password.verifySync(password as string, accounts[username as string] ?? "", "bcrypt");
+            const authToken = /^(Basic )?(.*)$/.exec(base64auth) ?? ["", "", ""];
+            const [username, password] = atob(authToken[2]).split(":") ?? ["", ""];
+            const valid = Bun.password.verifySync(password ?? "", accounts[username ?? ""] ?? "", "bcrypt");
 
-            if (!accounts[username as string] || !valid)
+            if (!accounts[username ?? ""] || !valid)
                 rej("Invalid credentials");
             else
                 res("");

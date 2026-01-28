@@ -136,11 +136,6 @@ body {
             h2 span.green {
                 color: lightgreen;
             }
-            button {
-                background: var(--epic-gradient-fg);
-                font-weight: 800;
-                font-size: 2em;
-            }
         }
     }
     &.How {
@@ -161,10 +156,65 @@ body {
     &.Contents {
         grid-area: Contents;
         animation-delay: 0.3s;
+        display: flex;
+        flex-direction: column;
+
+        & > div {
+            display: flex;
+            flex-direction: column;
+            flex-basis: 90%;
+            gap: var(--spacing);
+
+            p {
+                margin: 0;
+                display: flex;
+                justify-content: space-between;
+            }
+            & > div {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+
+                &#dictee-contents-wrapper {
+                    flex-basis: 80%;
+                }
+                textarea {
+                    flex-basis: 90%;
+                }
+            }
+        }
     }
     &.Participants {
         grid-area: Participants;
         animation-delay: 0.5s;
+
+        div {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff2;
+            border-radius: var(--spacing);
+
+            p {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 0;
+                padding: 8px;
+
+                b {
+                    margin-left: calc(var(--spacing) - 8px);
+                }
+                button {
+                    width: 40px;
+                    height: 40px;
+
+                    img {
+                        height: 24px;
+                    }
+                }
+            }
+        }
     }
     &.Status {
         grid-area: Status;
@@ -258,7 +308,22 @@ button {
     }
 }
 
+input, textarea {
+    background: #0004;
+    border: 1px solid #fff;
+    border-radius: var(--spacing);
+    padding: calc(var(--spacing) / 2);
+    outline: none;
+    color: inherit;
+    font-family: inherit;
+}
+
+textarea {
+    resize: none;
+}
+
 fieldset {
+    background: #0004;
     border-radius: var(--spacing);
 
     input {
@@ -266,9 +331,8 @@ fieldset {
         background: none;
         border: none;
         border-bottom: 2px solid #fff0;
-        outline: none;
-        color: inherit;
-        font-family: inherit;
+        border-radius: 0;
+        padding: 4px 0;
         font-size: 1.2em;
         font-weight: bold;
         transition: 0.15s ease;
@@ -279,6 +343,11 @@ fieldset {
     }
 }
 
+button.dictee-bg {
+    font-weight: 800;
+    font-size: 2em;
+    background: var(--epic-gradient-fg);
+}
 .dictee-fg {
     color: transparent;
     background: var(--epic-gradient-fg);

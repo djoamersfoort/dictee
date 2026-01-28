@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import { join } from "path";
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 
@@ -33,6 +34,12 @@ const port = 7000;
 const app = express();
 
 app.use("/static", express.static("static"));
+app.use(session({
+    secret: process.env.SESSION_SECRET ?? "Groot Dictee Des DJO'sch",
+    cookie: {maxAge: 60000},
+    resave: false,
+    saveUninitialized: true
+}));
 
 app.get("/", (_req, res) => {
     res.sendFile(join(import.meta.dirname, "pages", "index.html"));
@@ -45,7 +52,7 @@ app.get("/examinator", (req, res) => {
         return;
     }
 
-    verifyAccount(req.header("Authorization") as string).then(() => {
+    verifyAccount(req.header("Authorization") ?? "").then(() => {
         res.sendFile(join(import.meta.dirname, "pages", "examiner.html"));
     }).catch(err => {
         res.setHeader("WWW-Authenticate", `Basic realm="Login required"`)
