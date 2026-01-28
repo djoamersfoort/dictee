@@ -12,7 +12,7 @@ export const verifyAccount = async (base64auth: string) => {
             const valid = Bun.password.verifySync(password ?? "", accounts[username ?? ""] ?? "", "bcrypt");
 
             if (!accounts[username ?? ""] || !valid)
-                rej("Invalid credentials");
+                rej("Joch detected");
             else
                 res("");
         });

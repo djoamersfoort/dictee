@@ -1,7 +1,7 @@
 import express from "express";
 import session from "express-session";
 import { join } from "path";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFile, writeFileSync } from "fs";
 
 import { verifyAccount } from "./account";
 
@@ -18,15 +18,16 @@ for (const i of [
 }
 
 // Dictee
-const dictee = {
-    states: {
-        CLOSED: 0,
-        OPEN: 1,
-        BUSY: 2
-    },
-    state: 0,
+type Dictee = {
+    state: "closed" | "open" | "busy",
+    participants: string[],
+    contents: string
+};
+
+const dictee: Dictee = {
+    state: "closed",
     participants: [],
-    text: ""
+    contents: ""
 };
 
 // Webpage
@@ -44,21 +45,79 @@ app.use(session({
 app.get("/", (_req, res) => {
     res.sendFile(join(import.meta.dirname, "pages", "index.html"));
 });
-app.get("/examinator", (req, res) => {
-    if (!req.header("Authorization")) {
-        res.setHeader("WWW-Authenticate", `Basic realm="Login required"`)
-          .status(401)
-          .send("401 Joch Detected");
-        return;
-    }
 
+app.get("/examinator", (req, res) => {
     verifyAccount(req.header("Authorization") ?? "").then(() => {
         res.sendFile(join(import.meta.dirname, "pages", "examiner.html"));
     }).catch(err => {
         res.setHeader("WWW-Authenticate", `Basic realm="Login required"`)
           .status(401)
           .send(`401 ${err}`);
-        return;
+    });
+});
+
+// API calls
+app.post("/api/v1/participate", (req, res) => {
+    let payload = "";
+    req.on("data", e => payload += new TextDecoder().decode(e));
+    req.on("end", () => {
+        const json: {firstName: string, lastName: string} = JSON.parse(payload);
+
+        if (!json.firstName || !json.lastName) {
+            res.status(400).send("Niet alle velden zijn ingevuld!");
+            return;
+        } else if (json.firstName.charAt(0) != json.firstName.charAt(0).toUpperCase()) {
+            res.status(400).send("Je voornaam begint met een ...");
+            return;
+        } else if (json.lastName === json.lastName.toLowerCase()) {
+            res.status(400).send("Er mist een hoofdletter in je achternaam!");
+            return;
+        }
+
+        const id = dictee.participants.push(`${json.firstName} ${json.lastName}`);
+
+        // @ts-ignore
+        req.session.participantID = id;
+        res.setHeader("Content-Type", "application/json").status(201).send(JSON.stringify({id}));
+    });
+});
+
+app.post("/api/v1/examiner/write-contents", (req, res) => {
+    verifyAccount(req.header("Authorization") ?? "").then(() => {
+        let payload = "";
+        req.on("data", e => payload += new TextDecoder().decode(e));
+        req.on("end", () => {
+            writeFile(join(import.meta.dirname, "..", "data", "contents.txt"), payload, err => {
+                if (err)
+                    res.status(500).send(`500 ${err.message}`);
+                else
+                    res.status(204).send("");
+            });
+        });
+    }).catch(() => {
+        res.status(401).send(`401 Joch detected`);
+    });
+});
+app.delete("/api/v1/examiner/kick-participant", (req, res) => {
+    verifyAccount(req.header("Authorization") ?? "").then(() => {
+        let payload = "";
+        req.on("data", e => payload += new TextDecoder().decode(e));
+        req.on("end", () => {
+
+        });
+    }).catch(() => {
+        res.status(401).send(`401 Joch detected`);
+    });
+});
+app.patch("/api/v1/examiner/set-state", (req, res) => {
+    verifyAccount(req.header("Authorization") ?? "").then(() => {
+        let payload = "";
+        req.on("data", e => payload += new TextDecoder().decode(e));
+        req.on("end", () => {
+
+        });
+    }).catch(() => {
+        res.status(401).send(`401 Joch detected`);
     });
 });
 
