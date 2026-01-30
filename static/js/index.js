@@ -11,8 +11,18 @@ document.getElementById("names-confirm").addEventListener("click", () => {
         lastName: document.getElementById("last-name").value,
     });
 
-    fetch("/api/v1/participate", {method: "POST", body}).then(() => {
-
+    fetch("/api/v1/participate", {method: "POST", body}).then((res) => {
+        if (res.ok) {
+            document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message));
+            document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
+            dialog.switch("waiting-room");
+        } else {
+            res.text().then(txt => {
+                document.getElementById("name-error").textContent = txt;
+            }).catch(_ => {
+                document.getElementById("name-error").textContent = "Oei. Daar ging iets mis.";
+            });
+        }
     }).catch(err => {
 
     });

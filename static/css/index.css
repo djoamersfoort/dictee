@@ -330,6 +330,7 @@ fieldset {
         width: 100%;
         background: none;
         border: none;
+        border-top: 2px solid #fff0;
         border-bottom: 2px solid #fff0;
         border-radius: 0;
         padding: 4px 0;
@@ -411,6 +412,12 @@ button.dictee-bg {
         text-align: center;
         margin-bottom: 1.2em;
     }
+    img[src*="tenor"] {
+        display: block;
+        margin: calc(var(--spacing) * 3) auto;
+        width: 50%;
+        border-radius: var(--spacing);
+    }
 
     .dialog-text {
         width: 60%;
@@ -430,6 +437,9 @@ button.dictee-bg {
         #name-error {
             text-align: center;
             user-select: none;
+        }
+        p + fieldset {
+            margin-top: -1em;
         }
     }
     .dialog-buttons {

@@ -1,9 +1,16 @@
 import express from "express";
 import session from "express-session";
+
+// soon™
+// import { Server as Engine } from "@socket.io/bun-engine";
+// import { Server } from "socket.io";
+
 import { join } from "path";
 import { existsSync, mkdirSync, writeFile, writeFileSync } from "fs";
 
 import { verifyAccount } from "./account";
+import { dictee } from "./dictee";
+
 
 // `data` directory existence check
 if (!existsSync(join(import.meta.dirname, "..", "data")))
@@ -16,19 +23,6 @@ for (const i of [
 ]) {
     if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
 }
-
-// Dictee
-type Dictee = {
-    state: "closed" | "open" | "busy",
-    participants: string[],
-    contents: string
-};
-
-const dictee: Dictee = {
-    state: "closed",
-    participants: [],
-    contents: ""
-};
 
 // Webpage
 const port = 7000;
@@ -74,7 +68,11 @@ app.post("/api/v1/participate", (req, res) => {
             return;
         }
 
-        const id = dictee.participants.push(`${json.firstName} ${json.lastName}`);
+        const id = dictee.participants.push({
+            firstName: json.firstName,
+            lastName: json.lastName,
+            answers: []
+        });
 
         // @ts-ignore
         req.session.participantID = id;
@@ -138,7 +136,7 @@ const wss = Bun.serve({
         data: {},
         open(ws) {
             console.log("open");
-            ws.send(JSON.stringify({act: "state", open: true, waiting: 1}));
+            ws.send(JSON.stringify({act: "state", open: true, waiting: 2}));
         },
         close(ws) {
             console.log("shut");

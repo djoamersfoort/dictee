@@ -209,11 +209,11 @@
                 <div class="dialog-inputs">
                     <fieldset>
                         <legend>Voornaam</legend>
-                        <input id="first-name">
+                        <input id="first-name" placeholder="Henc" spellcheck="false" autocomplete="off">
                     </fieldset>
                     <fieldset>
                         <legend>Achternaam</legend>
-                        <input id="last-name">
+                        <input id="last-name" placeholder="de Scootmobiel" spellcheck="false" autocomplete="off">
                     </fieldset>
                     <h4 id="name-error" class="red-fg">&nbsp;</h4>
                     <div class="dialog-buttons">
@@ -226,6 +226,18 @@
                             <img src="/static/icons/arrow-right.svg" alt="Go!" class="img-r">
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <div id="waiting-room">
+                <h1>Hallo, <span id="waiting-room-welcome" class="dictee-fg"></span>!</h1>
+                <h3>Wacht hier tot de examinator het dictee start.</h3>
+                <div class="dialog-inputs">
+                    <p>Het kan zijn dat je tijdens het dictee letters met accenten moet typen. Je kunt hier alvast testen of dat lukt.</p>
+                    <fieldset>
+                        <input placeholder="Typ hier om te testen..." spellcheck="false">
+                    </fieldset>
+                    <img src="https://media.tenor.com/2WtBkf2YI00AAAAd/bean-mr.gif" alt="Waiting...">
                 </div>
             </div>
         </div>
