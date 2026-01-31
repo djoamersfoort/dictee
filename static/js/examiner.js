@@ -2,8 +2,6 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
 
-socket.on("connect", () => socket.emit("examiner-fetch"));
-
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");
@@ -38,7 +36,34 @@ socket.on("examiner-contents", (t, c) => {
 });
 
 // Participants
+const participantList = document.getElementById("participant-list");
+
+const kickParticipant = (index) => socket.emit("examiner-kick", index);
+
 socket.on("examiner-participants", participants => {
+    [...participantList.children].forEach(c => c.remove());
+
+    for (let i=0; i<participants.length; i++) {
+        if (!participants[i]) continue;
+
+        const label = document.createElement("b");
+        label.textContent = `${participants[i].firstName} ${participants[i].lastName}`;
+
+        const kickButton = document.createElement("button");
+        kickButton.classList.add("red-bg");
+        kickButton.addEventListener("click", () => kickParticipant(i));
+
+        const kickButtonIcon = document.createElement("img");
+        kickButtonIcon.src = "/static/icons/user-x.svg";
+        kickButtonIcon.alt = `Kick ${participants[i].firstName}`;
+        kickButton.appendChild(kickButtonIcon);
+
+        const wrapper = document.createElement("p");
+        wrapper.appendChild(label);
+        wrapper.appendChild(kickButton);
+
+        participantList.appendChild(wrapper);
+    }
 });
 
 // Status

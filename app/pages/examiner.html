@@ -46,36 +46,25 @@
 
             <div class="card Participants">
                 <h3>Kandidatenlijst</h3>
-                <div>
-                    <p>
-                        <b>Opa Gerda</b>
-                        <button class="red-bg"><img src="/static/icons/user-x.svg"></button>
-                    </p>
-                    <p>
-                        <b>Oma Henk</b>
-                        <button class="red-bg"><img src="/static/icons/user-x.svg"></button>
-                    </p>
-                </div>
+                <div id="participant-list"></div>
             </div>
 
             <div class="card Status">
                 <h3>Status</h3>
-                <div>
-                    <h2 id="dictee-state"></h2>
-                    <div id="state-buttons">
-                        <button id="state-to-closed" class="red-bg">
-                            <span>Afsluiten</span>
-                            <img src="/static/icons/x.svg" class="img-r">
-                        </button>
-                        <button id="state-to-open" class="green-bg">
-                            <span>Starten!</span>
-                            <img src="/static/icons/arrow-right.svg" class="img-r">
-                        </button>
-                        <button id="state-to-busy" class="dictee-bg">
-                            <span>Vrijgeven!</span>
-                            <img src="/static/icons/arrow-right.svg" class="img-r">
-                        </button>
-                    </div>
+                <h2 id="dictee-state"></h2>
+                <div id="state-buttons">
+                    <button id="state-to-closed" class="red-bg">
+                        <img src="/static/icons/x.svg" class="img-l">
+                        <span>Afsluiten</span>
+                    </button>
+                    <button id="state-to-open" class="green-bg">
+                        <span>Starten!</span>
+                        <img src="/static/icons/arrow-right.svg" class="img-r">
+                    </button>
+                    <button id="state-to-busy" class="dictee-bg">
+                        <span>Vrijgeven!</span>
+                        <img src="/static/icons/arrow-right.svg" class="img-r">
+                    </button>
                 </div>
             </div>
 

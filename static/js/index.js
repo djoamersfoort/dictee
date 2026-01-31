@@ -16,13 +16,21 @@ document.getElementById("names-confirm").addEventListener("click", () => {
     );
 });
 
-socket.on("dictee-state", (open, waiting) => {
-    const buttonText = (open)
-      ? `Op dit moment is er een dictee <span class="green-fg">beschikbaar</span>.<br>Er zijn ${waiting} mensen aan het wachten.`
-      : `Op dit moment is er <span class="red-fg">geen</span> dictee beschikbaar.`;
+addEventListener("keydown", e => {
+    if (e.key === "Enter" && dialog.current.id === "name-inputs")
+        document.getElementById("names-confirm").click();
+});
+
+socket.on("dictee-state", (state, waiting) => {
+    const waitingFormulation = (waiting === 1) ? `Er is ${waiting} kandidaat` : `Er zijn ${waiting} kandidaten`;
+    const buttonText = (state === "closed")
+      ? `Op dit moment is er <span class="red-fg">geen</span> dictee beschikbaar.`
+      : (state === "open")
+      ? `Op dit moment is er een dictee <span class="green-fg">beschikbaar</span>.<br>${waitingFormulation} aan het wachten.`
+      : `Op dit moment is het dictee <span class="red-fg">bezig</span>.`;
 
     participateLabel.innerHTML = buttonText;
-    participateButton.disabled = !open;
+    participateButton.disabled = (state !== "open");
 });
 
 socket.on("participate-reply", (err, id) => {
@@ -34,4 +42,9 @@ socket.on("participate-reply", (err, id) => {
     document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message));
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
     dialog.switch("waiting-room");
+});
+
+socket.on("kicked", () => {
+    dialog.close();
+    // todo: notify user
 });

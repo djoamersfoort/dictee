@@ -25,23 +25,26 @@ for (const i of [
 // Declarations
 const port = 7000;
 const app = new Hono();
-const io = new Server();
+const io = new Server({
+    connectionStateRecovery: {maxDisconnectionDuration: 120e3}
+});
 const engine = new Engine();
 
 // Socket.IO
-const broadcastExceptID = (myID: string, event: string, ...args: any) => {
+const broadcast = (event: string, ...args: any) => {
     io.fetchSockets().then(sockets => {
-        sockets.forEach(s => {
-            if (s.id === myID) return;
+        sockets.forEach(s => s.emit(event, ...args));
+    }).catch(() => {});
+};
 
-            s.emit(event, ...args);
-        });
-    });
+const broadcastExaminers = (auth: string | undefined, event: string, ...args: any) => {
+    isExaminer(auth).then(() => broadcast(event, ...args)).catch(() => {});
 };
 
 io.bind(engine);
 io.on("connection", socket => {
-    socket.emit("dictee-state", true, 2);
+    const auth = socket.client.request.headers.authorization;
+    socket.emit("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
 
     socket.on("participate", (firstName: string, lastName: string) => {
         if (!firstName || !lastName) {
@@ -53,22 +56,34 @@ io.on("connection", socket => {
         } else if (lastName === lastName.toLowerCase()) {
             socket.emit("participate-reply", "Er mist een hoofdletter in je achternaam!");
             return;
+        } else if (dictee.isFull()) {
+            socket.emit("participate-reply", "Sorry, het dictee zit al vol!");
+            return;
         }
 
-        dictee.participants.push({firstName, lastName, answers: []});
-        socket.emit("participate-reply", null, socket.id);
+        socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
+        broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+        broadcastExaminers(auth, "examiner-participants", dictee.participants);
     });
 
-    isExaminer(socket.client.request.headers.authorization).then(() => {
-        socket.on("examiner-fetch", () => {
-            const contents = new TextDecoder().decode(readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))).split("\n");
-            const title = contents.shift();
-            if (!contents[contents.length - 1]) contents.pop();
+    socket.conn.on("close", () => {
+        const matchingParticipant = dictee.participants.filter(p => p && p.socketID === socket.id)[0];
 
-            socket.emit("examiner-contents", title, contents.join("\n"));
-            socket.emit("examiner-participants", dictee.participants);
-            socket.emit("examiner-state", dictee.state);
-        });
+        if (matchingParticipant) {
+            dictee.kick(dictee.participants.indexOf(matchingParticipant));
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            broadcastExaminers(auth, "examiner-participants", dictee.participants);
+        }
+    });
+
+    isExaminer(auth).then(() => {
+        const contents = new TextDecoder().decode(readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))).split("\n");
+        const title = contents.shift();
+        if (!contents[contents.length - 1]) contents.pop();
+
+        socket.emit("examiner-contents", title, contents.join("\n"));
+        socket.emit("examiner-participants", dictee.participants);
+        socket.emit("examiner-state", dictee.state);
 
         socket.on("examiner-dictee-update", (body: string) => {
             const contents = body + (body.endsWith("\n") ? "" : "\n");
@@ -77,20 +92,27 @@ io.on("connection", socket => {
 
                 const contents = body.split("\n");
                 const title = contents.shift();
-                broadcastExceptID(socket.id, "examiner-contents", title, contents.join("\n"));
+                broadcastExaminers(auth, "examiner-contents", title, contents.join("\n"));
             });
         });
 
         socket.on("examiner-kick", (who: number) => {
-            delete dictee.participants[who];
-            broadcastExceptID("", "examiner-participants", dictee.participants);
+            const kickedSocketID = dictee.participants[who]?.socketID;
+            dictee.kick(who);
+
+            io.fetchSockets().then(sockets => {
+                sockets.filter(s => s.id === kickedSocketID)[0]?.emit("kicked");
+            });
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            broadcastExaminers(auth, "examiner-participants", dictee.participants);
         });
 
         socket.on("examiner-set-state", (to: State) => {
             dictee.state = to;
-            broadcastExceptID("", "examiner-state", dictee.state);
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            broadcastExaminers(auth, "examiner-state", dictee.state);
         });
-    });
+    }).catch(() => {});
 });
 
 // Webpage

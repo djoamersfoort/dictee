@@ -219,13 +219,23 @@ body {
     &.Status {
         grid-area: Status;
         animation-delay: 0.7s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
 
+        #dictee-state {
+            margin: 1em;
+        }
         #state-buttons {
             display: flex;
+            flex-direction: row;
             gap: var(--spacing);
 
             button {
                 display: none;
+                font-size: 1.2em;
+                padding-left: 1.5em;
+                padding-right: 1.5em;
             }
         }
     }
