@@ -10,11 +10,9 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/node-server": "^1.19.9",
     "@socket.io/bun-engine": "^0.1.0",
-    "@types/express": "^5.0.6",
-    "@types/express-session": "^1.18.2",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0",
+    "hono": "^4.11.7",
     "socket.io": "^4.8.3"
   }
 }

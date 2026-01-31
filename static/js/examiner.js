@@ -1,3 +1,9 @@
+import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+
+const socket = io();
+
+socket.on("connect", () => socket.emit("examiner-fetch"));
+
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");
@@ -5,13 +11,7 @@ const saveButton = document.getElementById("dictee-save");
 const statusText = document.getElementById("dictee-contents-status");
 
 saveButton.addEventListener("click", () => {
-    const body = `${title.value}\n${contents.value}`;
-
-    fetch("/examinator/write-contents", {method: "POST", body}).then(() => {
-        console.log("yes");
-    }).catch(err => {
-        console.error(`no ${err} :(`);
-    });
+    socket.emit("examiner-dictee-update", `${title.value}\n${contents.value}`);
 });
 
 contents.addEventListener("input", e => {
@@ -32,7 +32,43 @@ contents.addEventListener("input", e => {
     saveButton.disabled = (openWordCount === 0 || curlyBracesOpen != curlyBracesClose);
 });
 
-// Participants
+socket.on("examiner-contents", (t, c) => {
+    title.value = t;
+    contents.textContent = c;
+});
 
+// Participants
+socket.on("examiner-participants", participants => {
+});
 
 // Status
+const stateLabel = document.getElementById("dictee-state");
+const toClosed = document.getElementById("state-to-closed");
+const toOpen = document.getElementById("state-to-open");
+const toBusy = document.getElementById("state-to-busy");
+
+toClosed.addEventListener("click", () => socket.emit("examiner-set-state", "closed"));
+toOpen.addEventListener("click", () => socket.emit("examiner-set-state", "open"));
+toBusy.addEventListener("click", () => socket.emit("examiner-set-state", "busy"));
+
+socket.on("examiner-state", state => {
+    if (state === "closed") {
+        stateLabel.textContent = "Gesloten";
+        stateLabel.className = "red-fg";
+
+        toClosed.style.display = toBusy.style.display = "none";
+        toOpen.style.display = "flex";
+    } else if (state === "open") {
+        stateLabel.textContent = "Open voor deelname";
+        stateLabel.className = "green-fg";
+
+        toOpen.style.display = "none";
+        toClosed.style.display = toBusy.style.display = "flex";
+    } else if (state === "busy") {
+        stateLabel.textContent = "Bezig";
+        stateLabel.className = "green-fg";
+
+        toOpen.style.display = toBusy.style.display = "none";
+        toClosed.style.display = "flex";
+    }
+});

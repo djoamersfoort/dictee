@@ -1,15 +1,13 @@
-import express from "express";
-import session from "express-session";
-
-// soon™
-// import { Server as Engine } from "@socket.io/bun-engine";
-// import { Server } from "socket.io";
+import { Hono } from "hono";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Server as Engine } from "@socket.io/bun-engine";
+import { Server } from "socket.io";
 
 import { join } from "path";
-import { existsSync, mkdirSync, writeFile, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "fs";
 
-import { verifyAccount } from "./account";
-import { dictee } from "./dictee";
+import { isExaminer } from "./is-examiner";
+import { dictee, type State } from "./dictee";
 
 
 // `data` directory existence check
@@ -24,128 +22,114 @@ for (const i of [
     if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
 }
 
-// Webpage
+// Declarations
 const port = 7000;
-const app = express();
+const app = new Hono();
+const io = new Server();
+const engine = new Engine();
 
-app.use("/static", express.static("static"));
-app.use(session({
-    secret: process.env.SESSION_SECRET ?? "Groot Dictee Des DJO'sch",
-    cookie: {maxAge: 60000},
-    resave: false,
-    saveUninitialized: true
-}));
+// Socket.IO
+const broadcastExceptID = (myID: string, event: string, ...args: any) => {
+    io.fetchSockets().then(sockets => {
+        sockets.forEach(s => {
+            if (s.id === myID) return;
 
-app.get("/", (_req, res) => {
-    res.sendFile(join(import.meta.dirname, "pages", "index.html"));
-});
-
-app.get("/examinator", (req, res) => {
-    verifyAccount(req.header("Authorization") ?? "").then(() => {
-        res.sendFile(join(import.meta.dirname, "pages", "examiner.html"));
-    }).catch(err => {
-        res.setHeader("WWW-Authenticate", `Basic realm="Login required"`)
-          .status(401)
-          .send(`401 ${err}`);
+            s.emit(event, ...args);
+        });
     });
-});
+};
 
-// API calls
-app.post("/api/v1/participate", (req, res) => {
-    let payload = "";
-    req.on("data", e => payload += new TextDecoder().decode(e));
-    req.on("end", () => {
-        const json: {firstName: string, lastName: string} = JSON.parse(payload);
+io.bind(engine);
+io.on("connection", socket => {
+    socket.emit("dictee-state", true, 2);
 
-        if (!json.firstName || !json.lastName) {
-            res.status(400).send("Niet alle velden zijn ingevuld!");
+    socket.on("participate", (firstName: string, lastName: string) => {
+        if (!firstName || !lastName) {
+            socket.emit("participate-reply", "Niet alle velden zijn ingevuld!");
             return;
-        } else if (json.firstName.charAt(0) != json.firstName.charAt(0).toUpperCase()) {
-            res.status(400).send("Je voornaam begint met een ...");
+        } else if (firstName.charAt(0) != firstName.charAt(0).toUpperCase()) {
+            socket.emit("participate-reply", "Je voornaam begint met een ...");
             return;
-        } else if (json.lastName === json.lastName.toLowerCase()) {
-            res.status(400).send("Er mist een hoofdletter in je achternaam!");
+        } else if (lastName === lastName.toLowerCase()) {
+            socket.emit("participate-reply", "Er mist een hoofdletter in je achternaam!");
             return;
         }
 
-        const id = dictee.participants.push({
-            firstName: json.firstName,
-            lastName: json.lastName,
-            answers: []
+        dictee.participants.push({firstName, lastName, answers: []});
+        socket.emit("participate-reply", null, socket.id);
+    });
+
+    isExaminer(socket.client.request.headers.authorization).then(() => {
+        socket.on("examiner-fetch", () => {
+            const contents = new TextDecoder().decode(readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))).split("\n");
+            const title = contents.shift();
+            if (!contents[contents.length - 1]) contents.pop();
+
+            socket.emit("examiner-contents", title, contents.join("\n"));
+            socket.emit("examiner-participants", dictee.participants);
+            socket.emit("examiner-state", dictee.state);
         });
 
-        // @ts-ignore
-        req.session.participantID = id;
-        res.setHeader("Content-Type", "application/json").status(201).send(JSON.stringify({id}));
-    });
-});
+        socket.on("examiner-dictee-update", (body: string) => {
+            const contents = body + (body.endsWith("\n") ? "" : "\n");
+            writeFile(join(import.meta.dirname, "..", "data", "contents.txt"), contents, err => {
+                socket.emit("examiner-dictee-update-reply", err);
 
-app.post("/api/v1/examiner/write-contents", (req, res) => {
-    verifyAccount(req.header("Authorization") ?? "").then(() => {
-        let payload = "";
-        req.on("data", e => payload += new TextDecoder().decode(e));
-        req.on("end", () => {
-            writeFile(join(import.meta.dirname, "..", "data", "contents.txt"), payload, err => {
-                if (err)
-                    res.status(500).send(`500 ${err.message}`);
-                else
-                    res.status(204).send("");
+                const contents = body.split("\n");
+                const title = contents.shift();
+                broadcastExceptID(socket.id, "examiner-contents", title, contents.join("\n"));
             });
         });
-    }).catch(() => {
-        res.status(401).send(`401 Joch detected`);
-    });
-});
-app.delete("/api/v1/examiner/kick-participant", (req, res) => {
-    verifyAccount(req.header("Authorization") ?? "").then(() => {
-        let payload = "";
-        req.on("data", e => payload += new TextDecoder().decode(e));
-        req.on("end", () => {
 
+        socket.on("examiner-kick", (who: number) => {
+            delete dictee.participants[who];
+            broadcastExceptID("", "examiner-participants", dictee.participants);
         });
-    }).catch(() => {
-        res.status(401).send(`401 Joch detected`);
-    });
-});
-app.patch("/api/v1/examiner/set-state", (req, res) => {
-    verifyAccount(req.header("Authorization") ?? "").then(() => {
-        let payload = "";
-        req.on("data", e => payload += new TextDecoder().decode(e));
-        req.on("end", () => {
 
+        socket.on("examiner-set-state", (to: State) => {
+            dictee.state = to;
+            broadcastExceptID("", "examiner-state", dictee.state);
         });
-    }).catch(() => {
-        res.status(401).send(`401 Joch detected`);
     });
 });
 
-app.listen(port, () => {
-    console.log(`Web server started on port ${port}!`);
+// Webpage
+app.get("/", c => {
+    return c.text(
+        new TextDecoder().decode(readFileSync(join(import.meta.dirname, "pages", "index.html"))),
+        200,
+        {"Content-Type": "text/html"}
+    );
 });
 
-// WebSocket server
-const wss = Bun.serve({
-    port: port + 1,
-    fetch(req, server) {
-        const success = server.upgrade(req, {data: ""});
+app.get("/examinator", async c => {
+    if (c.req.header("Authorization")) {
+        const valid = await isExaminer(c.req.header("Authorization")).then(() => true).catch(() => false);
 
-        if (success) return;
-        return new Response("That's no WebSocket!");
-    },
-    websocket: {
-        data: {},
-        open(ws) {
-            console.log("open");
-            ws.send(JSON.stringify({act: "state", open: true, waiting: 2}));
-        },
-        close(ws) {
-            console.log("shut");
-        },
-        async message(ws, message) {
-            console.log(`message ${message}`);
-            ws.send(`je bent zelf ${message}`);
-        },
-
+        if (valid) return c.text(
+            new TextDecoder().decode(readFileSync(join(import.meta.dirname, "pages", "examiner.html"))),
+            200,
+            {"Content-Type": "text/html"}
+        );
     }
+
+    c.header("WWW-Authenticate", `Basic realm="Login required"`);
+    return c.text("401 Joch Detected", 401, {"Content-Type": "text/plain"});
 });
-console.log(`WebSocket server started on port ${wss.port}!`);
+
+app.use("/static/*", serveStatic({root: join(import.meta.dirname, "..")}))
+
+export default {
+    ...engine.handler(),
+    port,
+    idleTimeout: 30,
+
+    fetch(req: Request, server: any) {
+        const url = new URL(req.url);
+
+        if (url.pathname === "/socket.io/")
+            return engine.handleRequest(req, server);
+
+        return app.fetch(req, server);
+    }
+}

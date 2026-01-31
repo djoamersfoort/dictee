@@ -219,6 +219,15 @@ body {
     &.Status {
         grid-area: Status;
         animation-delay: 0.7s;
+
+        #state-buttons {
+            display: flex;
+            gap: var(--spacing);
+
+            button {
+                display: none;
+            }
+        }
     }
 
     .subcards-grid {
@@ -271,6 +280,8 @@ button {
     padding: 8px 0;
     font-family: inherit;
     font-style: italic;
+    font-weight: 800;
+    font-size: 2em;
     text-transform: uppercase;
     color: inherit;
     border: none;
@@ -345,8 +356,6 @@ fieldset {
 }
 
 button.dictee-bg {
-    font-weight: 800;
-    font-size: 2em;
     background: var(--epic-gradient-fg);
 }
 .dictee-fg {

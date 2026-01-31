@@ -1,3 +1,4 @@
+export type State = "closed" | "open" | "busy";
 
 type Participant = {
     firstName: string,
@@ -6,13 +7,15 @@ type Participant = {
 };
 
 type Dictee = {
-    state: "closed" | "open" | "busy",
-    participants: Participant[],
+    state: State,
+    participants: Array<Participant | undefined>,
     contents: string
 };
 
+export const maxParticipants = 10;
+
 export const dictee: Dictee = {
     state: "closed",
-    participants: [],
+    participants: new Array(maxParticipants),
     contents: ""
 };

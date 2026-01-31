@@ -61,11 +61,21 @@
             <div class="card Status">
                 <h3>Status</h3>
                 <div>
-                    <h2 class="green-fg">Open voor deelname</h2>
-                    <button class="dictee-bg">
-                        <span>Vrijgeven!</span>
-                        <img src="/static/icons/arrow-right.svg" class="img-r">
-                    </button>
+                    <h2 id="dictee-state"></h2>
+                    <div id="state-buttons">
+                        <button id="state-to-closed" class="red-bg">
+                            <span>Afsluiten</span>
+                            <img src="/static/icons/x.svg" class="img-r">
+                        </button>
+                        <button id="state-to-open" class="green-bg">
+                            <span>Starten!</span>
+                            <img src="/static/icons/arrow-right.svg" class="img-r">
+                        </button>
+                        <button id="state-to-busy" class="dictee-bg">
+                            <span>Vrijgeven!</span>
+                            <img src="/static/icons/arrow-right.svg" class="img-r">
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -80,8 +90,7 @@
         <div class="dialog">
         </div>
 
-        <script src="/static/js/socket.js"></script>
-        <script src="/static/js/examiner.js"></script>
+        <script src="/static/js/examiner.js" type="module"></script>
         <noscript>
             <div class="dialog">
                 <h1>Ho even!</h1>
