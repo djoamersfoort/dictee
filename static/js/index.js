@@ -21,16 +21,19 @@ addEventListener("keydown", e => {
         document.getElementById("names-confirm").click();
 });
 
-socket.on("dictee-state", (state, waiting) => {
+socket.on("dictee-state", (state, waiting, full) => {
     const waitingFormulation = (waiting === 1) ? `Er is ${waiting} kandidaat` : `Er zijn ${waiting} kandidaten`;
+    const fullFormulation = (full) ? ", daarmee zit het vol." : ".";
+
     const buttonText = (state === "closed")
       ? `Op dit moment is er <span class="red-fg">geen</span> dictee beschikbaar.`
       : (state === "open")
-      ? `Op dit moment is er een dictee <span class="green-fg">beschikbaar</span>.<br>${waitingFormulation} aan het wachten.`
+      ? `Op dit moment is er een dictee <span class="green-fg">beschikbaar</span>.
+         <br>${waitingFormulation} aan het wachten${fullFormulation}`
       : `Op dit moment is het dictee <span class="red-fg">bezig</span>.`;
 
     participateLabel.innerHTML = buttonText;
-    participateButton.disabled = (state !== "open");
+    participateButton.disabled = (state !== "open" || full);
 });
 
 socket.on("participate-reply", (err, id) => {
@@ -44,7 +47,26 @@ socket.on("participate-reply", (err, id) => {
     dialog.switch("waiting-room");
 });
 
-socket.on("kicked", () => {
+socket.on("force-quit", (reason) => {
+    if (dialog.current.element) {
+        dialog.close();
+        sonner.show(reason, "alert-circle", "red-bg");
+    }
+});
+
+socket.on("dictee-start", contents => {
     dialog.close();
-    // todo: notify user
+    console.warn(contents);
+    // todo: display dictee
+});
+
+// socket disconnect action, no self-made event
+socket.on("disconnect", () => {
+    if (dialog.current.element) {
+        dialog.close();
+        sonner.show("Oei, de server is ermee gekapt.", null, "red-bg");
+    }
+
+    participateLabel.innerHTML = `De server is <span class="red-fg">offline</span>.`
+    participateButton.disabled = true;
 });

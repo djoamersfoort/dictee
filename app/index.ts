@@ -37,6 +37,20 @@ const broadcast = (event: string, ...args: any) => {
     }).catch(() => {});
 };
 
+const broadcastParticipants = (event: string, ...args: any) => {
+    const participantSocketIDs = dictee.participants.filter(p => p).map(p => p?.socketID);
+    io.fetchSockets().then(sockets => {
+        sockets.filter(s => participantSocketIDs.includes(s.id)).forEach(s => s.emit(event, ...args));
+    });
+};
+
+const broadcastNonParticipants = (event: string, ...args: any) => {
+    const participantSocketIDs = dictee.participants.filter(p => p).map(p => p?.socketID);
+    io.fetchSockets().then(sockets => {
+        sockets.filter(s => !participantSocketIDs.includes(s.id)).forEach(s => s.emit(event, ...args));
+    });
+};
+
 const broadcastExaminers = (auth: string | undefined, event: string, ...args: any) => {
     isExaminer(auth).then(() => broadcast(event, ...args)).catch(() => {});
 };
@@ -62,7 +76,7 @@ io.on("connection", socket => {
         }
 
         socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
-        broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+        broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
         broadcastExaminers(auth, "examiner-participants", dictee.participants);
     });
 
@@ -71,13 +85,13 @@ io.on("connection", socket => {
 
         if (matchingParticipant) {
             dictee.kick(dictee.participants.indexOf(matchingParticipant));
-            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
             broadcastExaminers(auth, "examiner-participants", dictee.participants);
         }
     });
 
     isExaminer(auth).then(() => {
-        const contents = new TextDecoder().decode(readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))).split("\n");
+        const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile)).split("\n");
         const title = contents.shift();
         if (!contents[contents.length - 1]) contents.pop();
 
@@ -86,6 +100,8 @@ io.on("connection", socket => {
         socket.emit("examiner-state", dictee.state);
 
         socket.on("examiner-dictee-update", (body: string) => {
+            if (dictee.state !== "closed") return;
+
             const contents = body + (body.endsWith("\n") ? "" : "\n");
             writeFile(join(import.meta.dirname, "..", "data", "contents.txt"), contents, err => {
                 socket.emit("examiner-dictee-update-reply", err);
@@ -97,20 +113,39 @@ io.on("connection", socket => {
         });
 
         socket.on("examiner-kick", (who: number) => {
+            const kickMessage = "Oei, je bent door de examinator uit het dictee verwijderd.";
             const kickedSocketID = dictee.participants[who]?.socketID;
             dictee.kick(who);
 
             io.fetchSockets().then(sockets => {
-                sockets.filter(s => s.id === kickedSocketID)[0]?.emit("kicked");
+                sockets.filter(s => s.id === kickedSocketID)[0]?.emit("force-quit", kickMessage);
             });
-            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
             broadcastExaminers(auth, "examiner-participants", dictee.participants);
         });
 
         socket.on("examiner-set-state", (to: State) => {
-            dictee.state = to;
-            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+            if (to === "open")
+                dictee.setOpen();
+            else if (to === "closed")
+                dictee.setClosed();
+            else if (to === "busy")
+                dictee.setBusy();
+
+            broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
             broadcastExaminers(auth, "examiner-state", dictee.state);
+
+            if (to === "closed") {
+                const closeMessage = "Oei, de examinator heeft het dictee afgesloten.";
+                broadcast("force-quit", closeMessage);
+            } else if (to === "busy") {
+                const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile));
+                const dicteePayload = contents.replaceAll(/\{(.*?)\}/g, "{}");
+                broadcastParticipants("dictee-start", dicteePayload);
+
+                const startMessage = "Oei, de examinator heeft het dictee al gestart.";
+                broadcastNonParticipants("force-quit", startMessage);
+            }
         });
     }).catch(() => {});
 });

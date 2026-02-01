@@ -12,7 +12,7 @@ saveButton.addEventListener("click", () => {
     socket.emit("examiner-dictee-update", `${title.value}\n${contents.value}`);
 });
 
-contents.addEventListener("input", e => {
+const validateContentsInput = (e) => {
     const openWords = e.target.value.match(/\{(.+?)\}/g);
     const openWordCount = (openWords) ? openWords.length : 0;
     const curlyBracesOpen = e.target.value.match(/\{/g) ? e.target.value.match(/\{/g).length : 0;
@@ -28,7 +28,9 @@ contents.addEventListener("input", e => {
 
     statusText.textContent = output;
     saveButton.disabled = (openWordCount === 0 || curlyBracesOpen != curlyBracesClose);
-});
+};
+
+contents.addEventListener("input", validateContentsInput);
 
 socket.on("examiner-contents", (t, c) => {
     title.value = t;
@@ -51,7 +53,9 @@ socket.on("examiner-participants", participants => {
 
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");
-        kickButton.addEventListener("click", () => kickParticipant(i));
+        kickButton.addEventListener("click", () => {
+            kickButton.classList.contains("kick-confirm") ? kickParticipant(i) : kickButton.classList.add("kick-confirm");
+        });
 
         const kickButtonIcon = document.createElement("img");
         kickButtonIcon.src = "/static/icons/user-x.svg";
@@ -78,18 +82,24 @@ toBusy.addEventListener("click", () => socket.emit("examiner-set-state", "busy")
 
 socket.on("examiner-state", state => {
     if (state === "closed") {
+        title.disabled = contents.disabled = false;
+        validateContentsInput({target: contents});
         stateLabel.textContent = "Gesloten";
         stateLabel.className = "red-fg";
 
         toClosed.style.display = toBusy.style.display = "none";
         toOpen.style.display = "flex";
     } else if (state === "open") {
+        title.disabled = contents.disabled = saveButton.disabled = true;
+        statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
         stateLabel.textContent = "Open voor deelname";
         stateLabel.className = "green-fg";
 
         toOpen.style.display = "none";
         toClosed.style.display = toBusy.style.display = "flex";
     } else if (state === "busy") {
+        title.disabled = contents.disabled = saveButton.disabled = true;
+        statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
         stateLabel.textContent = "Bezig";
         stateLabel.className = "green-fg";
 

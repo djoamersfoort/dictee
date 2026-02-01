@@ -28,6 +28,14 @@
         transform: translateY(0);
     }
 }
+@keyframes kick-confirm-warning {
+    0%, 100% {
+        background-blend-mode: lighten;
+    }
+    50% {
+        background-blend-mode: unset;
+    }
+}
 
 body {
     width: 100vw;
@@ -211,6 +219,11 @@ body {
 
                     img {
                         height: 24px;
+                    }
+                    &.kick-confirm {
+                        animation-name: kick-confirm-warning;
+                        animation-duration: 0.5s;
+                        animation-iteration-count: infinite;
                     }
                 }
             }
@@ -490,5 +503,43 @@ noscript .dialog {
     * {
         display: block;
         opacity: inherit;
+    }
+}
+
+.sonner {
+    position: absolute;
+    left: calc(50vw);
+    top: -100px;
+
+    padding: var(--spacing);
+    border-radius: var(--spacing);
+    transition: top 0.5s ease;
+    pointer-events: none;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+    gap: var(--spacing);
+
+    --expire-bar-height: 3px;
+    --expire-transition: none;
+    --expire-clip-path: inset(calc(100% - var(--expire-bar-height)) 100% 0 0);
+
+    #sonner-text {
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+
+        transition: var(--expire-transition);
+        clip-path: var(--expire-clip-path);
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border-radius: inherit;
     }
 }
