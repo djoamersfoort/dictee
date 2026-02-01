@@ -49,6 +49,9 @@ body {
 
     --dialog-transition-time: 0.75s; /* changed by JS */
 }
+body::backdrop {
+    background: var(--epic-gradient-bg); /* work in fullscreen mode too */
+}
 
 .container {
     display: grid;
@@ -246,9 +249,6 @@ body {
 
             button {
                 display: none;
-                font-size: 1.2em;
-                padding-left: 1.5em;
-                padding-right: 1.5em;
             }
         }
     }

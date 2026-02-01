@@ -80,7 +80,7 @@ toClosed.addEventListener("click", () => socket.emit("examiner-set-state", "clos
 toOpen.addEventListener("click", () => socket.emit("examiner-set-state", "open"));
 toBusy.addEventListener("click", () => socket.emit("examiner-set-state", "busy"));
 
-socket.on("examiner-state", state => {
+socket.on("examiner-state", (state, participantsIn) => {
     if (state === "closed") {
         title.disabled = contents.disabled = false;
         validateContentsInput({target: contents});
@@ -89,18 +89,26 @@ socket.on("examiner-state", state => {
 
         toClosed.style.display = toBusy.style.display = "none";
         toOpen.style.display = "flex";
+    } else if (state === "open" && participantsIn) {
+        title.disabled = contents.disabled = saveButton.disabled = true;
+        statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
+        stateLabel.textContent = "Klaar om te starten";
+        stateLabel.className = "green-fg";
+
+        toOpen.style.display = toClosed.style.display = "none";
+        toBusy.style.display = "flex";
     } else if (state === "open") {
         title.disabled = contents.disabled = saveButton.disabled = true;
         statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
-        stateLabel.textContent = "Open voor deelname";
+        stateLabel.textContent = "Wachten op kandidaten";
         stateLabel.className = "green-fg";
 
-        toOpen.style.display = "none";
-        toClosed.style.display = toBusy.style.display = "flex";
+        toOpen.style.display = toBusy.style.display = "none";
+        toClosed.style.display = "flex";
     } else if (state === "busy") {
         title.disabled = contents.disabled = saveButton.disabled = true;
         statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
-        stateLabel.textContent = "Bezig";
+        stateLabel.textContent = "Aan het afnemen";
         stateLabel.className = "green-fg";
 
         toOpen.style.display = toBusy.style.display = "none";

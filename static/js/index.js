@@ -17,8 +17,12 @@ document.getElementById("names-confirm").addEventListener("click", () => {
 });
 
 addEventListener("keydown", e => {
-    if (e.key === "Enter" && dialog.current.id === "name-inputs")
-        document.getElementById("names-confirm").click();
+    if (e.key === "Enter") {
+        if (dialog.current.id) e.preventDefault();
+
+        if (dialog.current.id === "name-inputs")
+            document.getElementById("names-confirm").click();
+    }
 });
 
 socket.on("dictee-state", (state, waiting, full) => {
@@ -56,7 +60,6 @@ socket.on("force-quit", (reason) => {
 
 socket.on("dictee-start", contents => {
     dialog.close();
-    console.warn(contents);
     // todo: display dictee
 });
 

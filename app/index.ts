@@ -58,7 +58,7 @@ const broadcastExaminers = (auth: string | undefined, event: string, ...args: an
 io.bind(engine);
 io.on("connection", socket => {
     const auth = socket.client.request.headers.authorization;
-    socket.emit("dictee-state", dictee.state, dictee.participants.filter(p => p).length);
+    socket.emit("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
 
     socket.on("participate", (firstName: string, lastName: string) => {
         if (!firstName || !lastName) {
@@ -70,6 +70,9 @@ io.on("connection", socket => {
         } else if (lastName === lastName.toLowerCase()) {
             socket.emit("participate-reply", "Er mist een hoofdletter in je achternaam!");
             return;
+        } else if (firstName.match(/\d+/) || lastName.match(/\d+/)) {
+            socket.emit("participate-reply", "Getallen horen niet thuis in je naam!");
+            return;
         } else if (dictee.isFull()) {
             socket.emit("participate-reply", "Sorry, het dictee zit al vol!");
             return;
@@ -77,7 +80,7 @@ io.on("connection", socket => {
 
         socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
         broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
-        broadcastExaminers(auth, "examiner-participants", dictee.participants);
+        examinerUpdate();
     });
 
     socket.conn.on("close", () => {
@@ -86,9 +89,15 @@ io.on("connection", socket => {
         if (matchingParticipant) {
             dictee.kick(dictee.participants.indexOf(matchingParticipant));
             broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
-            broadcastExaminers(auth, "examiner-participants", dictee.participants);
         }
     });
+
+    const examinerUpdate = () => {
+        isExaminer(auth).then(() => {
+            broadcastExaminers(auth, "examiner-participants", dictee.participants);
+            broadcastExaminers(auth, "examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
+        }).catch(() => {});
+    };
 
     isExaminer(auth).then(() => {
         const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile)).split("\n");
@@ -97,7 +106,7 @@ io.on("connection", socket => {
 
         socket.emit("examiner-contents", title, contents.join("\n"));
         socket.emit("examiner-participants", dictee.participants);
-        socket.emit("examiner-state", dictee.state);
+        socket.emit("examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
 
         socket.on("examiner-dictee-update", (body: string) => {
             if (dictee.state !== "closed") return;
@@ -121,7 +130,7 @@ io.on("connection", socket => {
                 sockets.filter(s => s.id === kickedSocketID)[0]?.emit("force-quit", kickMessage);
             });
             broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
-            broadcastExaminers(auth, "examiner-participants", dictee.participants);
+            examinerUpdate();
         });
 
         socket.on("examiner-set-state", (to: State) => {
@@ -133,7 +142,7 @@ io.on("connection", socket => {
                 dictee.setBusy();
 
             broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
-            broadcastExaminers(auth, "examiner-state", dictee.state);
+            examinerUpdate();
 
             if (to === "closed") {
                 const closeMessage = "Oei, de examinator heeft het dictee afgesloten.";
