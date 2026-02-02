@@ -54,7 +54,7 @@ socket.on("examiner-participants", participants => {
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");
         kickButton.addEventListener("click", () => {
-            kickButton.classList.contains("kick-confirm") ? kickParticipant(i) : kickButton.classList.add("kick-confirm");
+            kickButton.classList.contains("confirm-warning") ? kickParticipant(i) : kickButton.classList.add("confirm-warning");
         });
 
         const kickButtonIcon = document.createElement("img");

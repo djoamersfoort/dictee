@@ -24,7 +24,7 @@
                 <h3>Deelnemen</h3>
                 <div>
                     <h2 id="participation-state">Aan het controleren...</h2>
-                    <button id="participate" class="dictee-bg" disabled>
+                    <button id="participate" class="main-bg" disabled>
                         <span>Deelnemen!</span>
                         <img src="/static/icons/arrow-right.svg" alt="Go!" class="img-r">
                     </button>
@@ -108,12 +108,31 @@
                   | Met trots gemaakt door <a href="https://github.com/ngkon6" target="_blank">ngkon</a>
             </div>
         </div>
+        <div class="container Dictee">
+            <div class="heading">
+                <div class="logo">
+                    <h1>Succes!</h1>
+                </div>
+            </div>
+            <div class="card DicteeForm">
+                <h3 id="dictee-form-title"></h3>
+                <p id="dictee-form-contents"></p>
+            </div>
+            <div class="card DicteeSubmit">
+                <h3 id="dictee-submit-h3">Klaar?</h3>
+                <p id="dictee-submit-p">Lever het dictee in. Je krijgt vervolgens direct de uitslag te zien.</p>
+                <button class="green-bg" id="dictee-submit" disabled>
+                    <span>Inleveren!</span>
+                    <img src="/static/icons/arrow-right.svg" alt="Inleveren" class="img-r">
+                </button>
+            </div>
+        </div>
 
         <div id="overlay"></div>
 
         <div class="dialog">
             <div id="rules">
-                <h1 class="dictee-fg">Reglement</h1>
+                <h1 class="main-fg">Reglement</h1>
                 <h3>Lees het reglement zorgvuldig door.</h3>
                 <div class="dialog-text">
                     <h4>1. Definities</h4>
@@ -204,7 +223,7 @@
             </div>
 
             <div id="name-inputs">
-                <h1 class="dictee-fg">Bijna klaar!</h1>
+                <h1 class="main-fg">Bijna klaar!</h1>
                 <h3>Vul alleen nog even je naam in.</h3>
                 <div class="dialog-inputs">
                     <fieldset>
@@ -230,7 +249,7 @@
             </div>
 
             <div id="waiting-room">
-                <h1>Hallo, <span id="waiting-room-welcome" class="dictee-fg"></span>!</h1>
+                <h1>Hallo, <span id="waiting-room-welcome" class="main-fg"></span>!</h1>
                 <h3>Wacht hier tot de examinator het dictee start.</h3>
                 <div class="dialog-inputs">
                     <p>Het kan zijn dat je tijdens het dictee letters met accenten moet typen. Je kunt hier alvast testen of dat lukt.</p>

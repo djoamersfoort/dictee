@@ -1,8 +1,8 @@
 :root {
-    --epic-gradient-fg:
+    --main-gradient-fg:
         radial-gradient(at 47% -56%, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
         linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
-    --epic-gradient-bg:
+    --main-gradient-bg:
         linear-gradient(1deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
         radial-gradient(at 44vw 200vh, rgb(30, 230, 130), rgba(30, 230, 130, 0)),
         linear-gradient(135deg, rgb(0, 130, 230), rgb(0, 160, 190));
@@ -28,7 +28,7 @@
         transform: translateY(0);
     }
 }
-@keyframes kick-confirm-warning {
+@keyframes confirm-warning {
     0%, 100% {
         background-blend-mode: lighten;
     }
@@ -42,7 +42,7 @@ body {
     height: 100vh;
     margin: 0;
     overflow: hidden;
-    background: var(--epic-gradient-bg);
+    background: var(--main-gradient-bg);
     font-family: Montserrat, sans-serif;
     line-height: 1.25;
     color: #fff;
@@ -50,7 +50,7 @@ body {
     --dialog-transition-time: 0.75s; /* changed by JS */
 }
 body::backdrop {
-    background: var(--epic-gradient-bg); /* work in fullscreen mode too */
+    background: var(--main-gradient-bg); /* work in fullscreen mode too */
 }
 
 .container {
@@ -73,6 +73,38 @@ body::backdrop {
         "Footer Footer Footer";
         grid-template-rows: 0fr 2fr 2fr 0fr;
         grid-template-columns: 1fr 0.5fr 1fr;
+    }
+    &.Dictee {
+        display: none;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+
+        .DicteeForm, .DicteeSubmit {
+            width: 50%;
+            min-width: 1000px;
+        }
+        .DicteeForm {
+            flex: auto;
+
+            input {
+                width: 150px;
+                margin: 1px;
+                padding: 2px 4px;
+                border-radius: 6px;
+            }
+        }
+        .DicteeSubmit {
+            display: flex;
+            flex-direction: column;
+
+            button {
+                width: unset;
+            }
+            p {
+                margin: 0.5em var(--spacing);
+            }
+        }
     }
     &.Examiner {
         grid-template-areas:
@@ -223,11 +255,6 @@ body::backdrop {
                     img {
                         height: 24px;
                     }
-                    &.kick-confirm {
-                        animation-name: kick-confirm-warning;
-                        animation-duration: 0.5s;
-                        animation-iteration-count: infinite;
-                    }
                 }
             }
         }
@@ -258,7 +285,6 @@ body::backdrop {
         display: grid;
         height: -webkit-fill-available;
         grid-template-columns: auto auto;
-        margin: var(--spacing);
         gap: var(--spacing);
 
         & > div {
@@ -340,6 +366,12 @@ button {
             rotate: 180deg;
         }
     }
+
+    &.confirm-warning {
+        animation-name: confirm-warning;
+        animation-duration: 0.5s;
+        animation-iteration-count: infinite;
+    }
 }
 
 input, textarea {
@@ -378,12 +410,12 @@ fieldset {
     }
 }
 
-button.dictee-bg {
-    background: var(--epic-gradient-fg);
+button.main-bg {
+    background: var(--main-gradient-fg);
 }
-.dictee-fg {
+.main-fg {
     color: transparent;
-    background: var(--epic-gradient-fg);
+    background: var(--main-gradient-fg);
     background-clip: text;
 }
 .red-fg {

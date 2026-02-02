@@ -51,7 +51,9 @@ const dialog = {
             }, this.fadetime);
         }, this.fadetime);
     },
-    close() {
+    close(newElement) {
+        if (newElement) this.current.element = newElement;
+
         this.element.querySelector(`#${this.current.id}`).style.opacity = "0";
         setTimeout(() => {
             const rect = this.current.element.getBoundingClientRect();
