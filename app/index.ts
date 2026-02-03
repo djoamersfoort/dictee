@@ -31,6 +31,8 @@ const io = new Server({
 const engine = new Engine();
 
 // Socket.IO
+const examinerSocketIDs: string[] = [];
+
 const broadcast = (event: string, ...args: any) => {
     io.fetchSockets().then(sockets => {
         sockets.forEach(s => s.emit(event, ...args));
@@ -51,8 +53,12 @@ const broadcastNonParticipants = (event: string, ...args: any) => {
     });
 };
 
-const broadcastExaminers = (auth: string | undefined, event: string, ...args: any) => {
-    isExaminer(auth).then(() => broadcast(event, ...args)).catch(() => {});
+const broadcastExaminers = (event: string, ...args: any) => {
+    io.fetchSockets().then(sockets => {
+        sockets.forEach(s => {
+            if (examinerSocketIDs.includes(s.id)) s.emit(event, ...args);
+        });
+    }).catch(() => {});
 };
 
 io.bind(engine);
@@ -90,16 +96,21 @@ io.on("connection", socket => {
             dictee.kick(dictee.participants.indexOf(matchingParticipant));
             broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
         }
+
+        isExaminer(auth).then(() => {
+            if (examinerSocketIDs.indexOf(socket.id) > -1)
+                examinerSocketIDs.splice(examinerSocketIDs.indexOf(socket.id), 1);
+        }).catch(() => {});
     });
 
     const examinerUpdate = () => {
-        isExaminer(auth).then(() => {
-            broadcastExaminers(auth, "examiner-participants", dictee.participants);
-            broadcastExaminers(auth, "examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
-        }).catch(() => {});
+        broadcastExaminers("examiner-participants", dictee.participants);
+        broadcastExaminers("examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
     };
 
     isExaminer(auth).then(() => {
+        if (!examinerSocketIDs.includes(socket.id)) examinerSocketIDs.push(socket.id);
+
         const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile)).split("\n");
         const title = contents.shift();
         if (!contents[contents.length - 1]) contents.pop();
@@ -117,7 +128,7 @@ io.on("connection", socket => {
 
                 const contents = body.split("\n");
                 const title = contents.shift();
-                broadcastExaminers(auth, "examiner-contents", title, contents.join("\n"));
+                broadcastExaminers("examiner-contents", title, contents.join("\n"));
             });
         });
 
