@@ -8,6 +8,7 @@ const participateLabel = document.getElementById("participation-state");
 const setParticipating = (to) => {
     document.querySelector(".Home").style.display = (to) ? "none" : "grid";
     document.querySelector(".Dictee").style.display = (to) ? "flex" : "none";
+    onbeforeunload = (to) ? () => "Je verlaat het dictee door te refreshen!" : null;
 };
 const isParticipating = () => document.querySelector(".Home").style.display === "none";
 
@@ -46,7 +47,7 @@ document.getElementById("dictee-submit").addEventListener("click", () => {
     }
 
     const answers = [...document.querySelectorAll(".DicteeForm input")].map(i => i.value);
-    console.log(answers);
+    socket.emit("submit-answers", answers);
 });
 
 const validateFormCompletion = (_e) => {
@@ -113,6 +114,7 @@ socket.on("dictee-start", txt => {
 
     for (const i of document.querySelectorAll(".DicteeForm input"))
         i.addEventListener("input", validateFormCompletion);
+    validateFormCompletion();
 
     dialog.close(document.body);
     setParticipating(true);

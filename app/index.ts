@@ -29,6 +29,7 @@ const io = new Server({
     connectionStateRecovery: {maxDisconnectionDuration: 120e3}
 });
 const engine = new Engine();
+const formInput = /\{(.*?)\}/g;
 
 // Socket.IO
 const examinerSocketIDs: string[] = [];
@@ -89,6 +90,35 @@ io.on("connection", socket => {
         examinerUpdate();
     });
 
+    socket.on("submit-answers", (answers: string[]) => {
+        const sender = dictee.participants.filter(p => p && p.socketID === socket.id)[0];
+        if (!sender) return;
+
+        sender.answers = answers;
+        const answerKeys = new TextDecoder().decode(
+            readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))
+        ).match(formInput);
+
+        if (answerKeys?.length !== answers.length) return;
+
+        let score = 0;
+        answers.forEach((answer, i) => {
+            const key = answerKeys[i]?.replaceAll(/(\{|\})/g, "");
+            if (answer === key) score++;
+        });
+        const grade = (score * 9 / answerKeys.length + 1).toFixed(1);
+
+        const results = JSON.parse(new TextDecoder().decode(
+            readFileSync(join(import.meta.dirname, "..", "data", "results.json"))
+        ));
+        results[`${sender.firstName} ${sender.lastName}`] = {score, answers};
+
+        writeFile(join(import.meta.dirname, "..", "data", "results.json"), JSON.stringify(results, null, 4), (err) => {
+            if (err) throw err;
+            socket.emit("results", score, answerKeys.length, grade, (+grade >= 5.5));
+        });
+    });
+
     socket.conn.on("close", () => {
         const matchingParticipant = dictee.participants.filter(p => p && p.socketID === socket.id)[0];
 
@@ -127,7 +157,7 @@ io.on("connection", socket => {
                 socket.emit("examiner-dictee-update-reply", err);
 
                 const contents = body.split("\n");
-                const title = contents.shift();
+                const title = contents.shift()?.replaceAll(/\{(.*?)\}/g, "$1");
                 broadcastExaminers("examiner-contents", title, contents.join("\n"));
             });
         });
