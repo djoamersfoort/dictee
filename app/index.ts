@@ -127,10 +127,10 @@ io.on("connection", socket => {
             broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
         }
 
-        isExaminer(auth).then(() => {
-            if (examinerSocketIDs.indexOf(socket.id) > -1)
-                examinerSocketIDs.splice(examinerSocketIDs.indexOf(socket.id), 1);
-        }).catch(() => {});
+        if (examinerSocketIDs.indexOf(socket.id) > -1)
+            examinerSocketIDs.splice(examinerSocketIDs.indexOf(socket.id), 1);
+
+        examinerUpdate();
     });
 
     const examinerUpdate = () => {

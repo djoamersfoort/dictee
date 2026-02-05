@@ -64,6 +64,9 @@ const validateFormCompletion = (_e) => {
     }
 };
 
+// Results
+document.getElementById("view-results").addEventListener("click", () => dialog.close());
+
 // Socket.IO events
 socket.on("dictee-state", (state, waiting, full) => {
     const waitingFormulation = (waiting === 1) ? `Er is ${waiting} kandidaat` : `Er zijn ${waiting} kandidaten`;
@@ -118,6 +121,16 @@ socket.on("dictee-start", txt => {
 
     dialog.close(document.body);
     setParticipating(true);
+});
+
+socket.on("results", (score, maxScore, grade, passed) => {
+    document.getElementById("pass-fail").className = (passed) ? "green-fg" : "red-fg";
+    document.getElementById("pass-fail").textContent = (passed) ? "Geslaagd!" : "Gezakt.";
+    document.getElementById("pass-fail-subtitle").textContent = (passed) ? "Gefeliciteerd!" : "Volgende keer lukt het vast wel.";
+    document.getElementById("result-description").innerHTML =
+      `Je had <span>${score} van de ${maxScore}</span> antwoorden goed en hebt daarmee een <span>${grade}</span> gehaald.`;
+
+    dialog.open("result", document.getElementById("dictee-submit"));
 });
 
 // socket disconnect action, no self-made event

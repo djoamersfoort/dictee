@@ -520,6 +520,35 @@ button.main-bg {
             }
         }
     }
+
+    #result {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing);
+
+        h1 {
+            font-size: 8em;
+            margin: 0;
+        }
+        h4, h5 {
+            text-align: center;
+        }
+        h4 {
+            font-size: 1.5em;
+            margin: 0.3em 0;
+        }
+        h5 {
+            color: #999;
+            font-size: 1.1em;
+            margin: 2em 0;
+            span {
+                color: #fff;
+            }
+        }
+        button {
+            margin-top: 2em;
+        }
+    }
 }
 noscript .dialog {
     opacity: 1;
