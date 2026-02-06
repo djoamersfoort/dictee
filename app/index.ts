@@ -16,7 +16,7 @@ if (!existsSync(join(import.meta.dirname, "..", "data")))
 
 for (const i of [
     join(import.meta.dirname, "..", "data", "contents.txt"),
-    join(import.meta.dirname, "..", "data", "results.json"),
+    dictee.resultsFile,
     join(import.meta.dirname, "..", "data", "examiners.json")
 ]) {
     if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
@@ -85,7 +85,9 @@ io.on("connection", socket => {
             return;
         }
 
-        socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
+        dictee.add(firstName, lastName, socket.id);
+        socket.emit("participate-reply", null);
+
         broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
         examinerUpdate();
     });
@@ -95,27 +97,31 @@ io.on("connection", socket => {
         if (!sender) return;
 
         sender.answers = answers;
-        const answerKeys = new TextDecoder().decode(
+        const fetchedAnswerKeys = new TextDecoder().decode(
             readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))
-        ).match(formInput);
+        ).match(formInput) as string[];
 
-        if (answerKeys?.length !== answers.length) return;
+        if (fetchedAnswerKeys.length !== answers.length) return;
+
+        const answerKeys: string[] = [];
+        for (const a of fetchedAnswerKeys) answerKeys.push(a.replaceAll(/(\{|\})/g, ""));
 
         let score = 0;
         answers.forEach((answer, i) => {
-            const key = answerKeys[i]?.replaceAll(/(\{|\})/g, "");
-            if (answer === key) score++;
+            if (answer === answerKeys[i]) score++;
         });
         const grade = (score * 9 / answerKeys.length + 1).toFixed(1);
 
         const results = JSON.parse(new TextDecoder().decode(
-            readFileSync(join(import.meta.dirname, "..", "data", "results.json"))
+            readFileSync(dictee.resultsFile)
         ));
         results[`${sender.firstName} ${sender.lastName}`] = {score, answers};
 
-        writeFile(join(import.meta.dirname, "..", "data", "results.json"), JSON.stringify(results, null, 4), (err) => {
+        writeFile(dictee.resultsFile, JSON.stringify(results, null, 4), (err) => {
             if (err) throw err;
             socket.emit("results", score, answerKeys.length, grade, (+grade >= 5.5));
+
+            setTimeout(() => socket.emit("answer-keys", answerKeys), 500);
         });
     });
 

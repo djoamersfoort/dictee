@@ -3,6 +3,7 @@ const dialog = {
     overlay: document.getElementById("overlay"),
     /** @type {{id: string, element: HTMLElement | null}} */
     current: {id: "", element: null},
+    flexDivs: ["result"],
     fadetime: 600,
     /**
      * @param {string} id
@@ -34,7 +35,7 @@ const dialog = {
 
             this.current.id = id;
             this.current.element = startTarget;
-            this.element.querySelector(`#${id}`).style.display = "block";
+            this.element.querySelector(`#${id}`).style.display = (this.flexDivs.includes(id) ? "flex" : "block");
             setTimeout(() => {
                 this.element.querySelector(`#${id}`).style.opacity = "1";
             }, this.fadetime + 50);
@@ -44,7 +45,7 @@ const dialog = {
         this.element.querySelector(`#${this.current.id}`).style.opacity = "0";
         setTimeout(() => {
             this.element.querySelector(`#${this.current.id}`).style.display = "none";
-            this.element.querySelector(`#${id}`).style.display = "block";
+            this.element.querySelector(`#${id}`).style.display = (this.flexDivs.includes(id) ? "flex" : "block");
             setTimeout(() => {
                 this.element.querySelector(`#${id}`).style.opacity = "1";
                 this.current.id = id;

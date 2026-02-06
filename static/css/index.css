@@ -86,12 +86,28 @@ body::backdrop {
         }
         .DicteeForm {
             flex: auto;
+            display: flex;
+            flex-direction: column;
 
             input {
                 width: 150px;
                 margin: 1px;
                 padding: 2px 4px;
                 border-radius: 6px;
+            }
+
+            p {
+                flex: auto;
+            }
+
+            button {
+                display: none;
+                width: auto;
+                font-size: 24px;
+
+                img {
+                    height: 24px;
+                }
             }
         }
         .DicteeSubmit {
@@ -317,6 +333,12 @@ h1, h3 {
 h3 {
     font-size: 2em;
     margin: 0.5em;
+
+    &.flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 }
 h4 {
     font-size: 1.2em;
@@ -522,7 +544,6 @@ button.main-bg {
     }
 
     #result {
-        display: flex;
         flex-direction: column;
         gap: var(--spacing);
 

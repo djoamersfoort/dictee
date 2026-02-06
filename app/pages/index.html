@@ -117,12 +117,16 @@
             <div class="card DicteeForm">
                 <h3 id="dictee-form-title"></h3>
                 <p id="dictee-form-contents"></p>
+                <button id="answer-switcher" class="main-bg">
+                    <span id="answer-switcher-text">Laat juiste antwoorden zien</span>
+                    <img id="answer-switcher-icon" src="/static/icons/check-circle.svg" alt="Switch user/correct" class="img-r">
+                </button>
             </div>
             <div class="card DicteeSubmit">
                 <h3 id="dictee-submit-h3">Klaar?</h3>
                 <p id="dictee-submit-p">Lever het dictee in. Je krijgt vervolgens direct de uitslag te zien.</p>
                 <button class="green-bg" id="dictee-submit" disabled>
-                    <span>Inleveren!</span>
+                    <span id="dictee-submit-btn">Inleveren!</span>
                     <img src="/static/icons/arrow-right.svg" alt="Inleveren" class="img-r">
                 </button>
             </div>
@@ -268,7 +272,7 @@
                 </div>
                 <h5 id="result-description"></h5>
                 <div class="dialog-inputs">
-                    <button id="view-results" class="main-bg">
+                    <button id="view-results" class="main-bg" disabled>
                         <span>Bekijk resultaten</span>
                         <img src="/static/icons/arrow-right.svg" alt="Go!" class="img-r">
                     </button>

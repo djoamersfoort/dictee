@@ -36,24 +36,29 @@ addEventListener("keydown", e => {
 // Dictee form page
 const initialDicteeSubmitH3 = document.getElementById("dictee-submit-h3").textContent;
 const initialDicteeSubmitP = document.getElementById("dictee-submit-p").textContent;
+const initialDicteeSubmitBtn = document.getElementById("dictee-submit-btn").textContent;
 
 document.getElementById("dictee-submit").addEventListener("click", () => {
     if (!document.getElementById("dictee-submit").classList.contains("confirm-warning")) {
         document.getElementById("dictee-submit").classList.add("confirm-warning");
         document.getElementById("dictee-submit-h3").textContent = "Weet je het zeker?";
         document.getElementById("dictee-submit-p").textContent = "Als je nog een keer klikt, kun je niet meer terug!";
+        document.getElementById("dictee-submit-btn").textContent = "Ja, inleveren!";
 
         return;
     }
 
     const answers = [...document.querySelectorAll(".DicteeForm input")].map(i => i.value);
     socket.emit("submit-answers", answers);
+
+    document.getElementById("view-results").disabled = true;
 });
 
 const validateFormCompletion = (_e) => {
     document.getElementById("dictee-submit").classList.remove("confirm-warning");
     document.getElementById("dictee-submit-h3").textContent = initialDicteeSubmitH3;
     document.getElementById("dictee-submit-p").textContent = initialDicteeSubmitP;
+    document.getElementById("dictee-submit-btn").textContent = initialDicteeSubmitBtn;
     document.getElementById("dictee-submit").disabled = false;
 
     for (const i of document.querySelectorAll(".DicteeForm input")) {
@@ -65,6 +70,28 @@ const validateFormCompletion = (_e) => {
 };
 
 // Results
+const givenAnswers = [];
+const rightAnswers = [];
+let showCorrectAnswers = false;
+
+const setCorrectAnswerVisibility = (_e, to) => {
+    showCorrectAnswers = (to === undefined) ? !showCorrectAnswers : to;
+
+    document.getElementById("answer-switcher-text").textContent =
+      `Laat ${showCorrectAnswers ? "mijn" : "juiste"} antwoorden zien`;
+    document.getElementById("answer-switcher-icon").src =
+      `/static/icons/${showCorrectAnswers ? "user" : "check-circle"}.svg`;
+
+    document.querySelectorAll(".DicteeForm input").forEach((input, i) => {
+        const correctlyAnswered = (givenAnswers[i] === rightAnswers[i]);
+
+        input.disabled = true;
+        input.style.borderColor = (correctlyAnswered || showCorrectAnswers) ? "lightgreen" : "salmon";
+        input.value = showCorrectAnswers ? rightAnswers[i] : givenAnswers[i];
+    });
+};
+
+document.getElementById("answer-switcher").addEventListener("click", setCorrectAnswerVisibility);
 document.getElementById("view-results").addEventListener("click", () => dialog.close());
 
 // Socket.IO events
@@ -83,7 +110,7 @@ socket.on("dictee-state", (state, waiting, full) => {
     participateButton.disabled = (state !== "open" || full);
 });
 
-socket.on("participate-reply", (err, id) => {
+socket.on("participate-reply", (err) => {
     if (err) {
         document.getElementById("name-error").textContent = err;
         return;
@@ -114,6 +141,7 @@ socket.on("dictee-start", txt => {
 
     document.getElementById("dictee-form-title").textContent = title;
     document.getElementById("dictee-form-contents").innerHTML = html;
+    document.getElementById("answer-switcher").style.display = "";
 
     for (const i of document.querySelectorAll(".DicteeForm input"))
         i.addEventListener("input", validateFormCompletion);
@@ -131,6 +159,22 @@ socket.on("results", (score, maxScore, grade, passed) => {
       `Je had <span>${score} van de ${maxScore}</span> antwoorden goed en hebt daarmee een <span>${grade}</span> gehaald.`;
 
     dialog.open("result", document.getElementById("dictee-submit"));
+});
+
+socket.on("answer-keys", answerKeys => {
+    document.getElementById("view-results").disabled = false;
+
+    givenAnswers.splice(0, givenAnswers.length, ...[...document.querySelectorAll(".DicteeForm input")].map(i => i.value));
+    rightAnswers.splice(0, rightAnswers.length, ...answerKeys);
+
+    setCorrectAnswerVisibility(null, false);
+    document.getElementById("answer-switcher").style.display = "flex";
+
+    document.getElementById("dictee-submit").classList.remove("confirm-warning");
+    document.getElementById("dictee-submit-btn").textContent = "Teruggaan!";
+    document.getElementById("dictee-submit-h3").textContent = "Genoeg gezien?";
+    document.getElementById("dictee-submit-p").textContent =
+      "Klik hieronder om terug te gaan. Voor meer vragen kun je bij je examinator terecht.";
 });
 
 // socket disconnect action, no self-made event
