@@ -115,3 +115,8 @@ socket.on("examiner-state", (state, participantsIn) => {
         toClosed.style.display = "flex";
     }
 });
+
+// socket disconnect action, no self-made event
+socket.on("disconnect", () => {
+    sonner.show("De server is ermee gekapt!", null, "red-bg");
+});
