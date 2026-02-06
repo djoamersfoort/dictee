@@ -37,6 +37,13 @@ socket.on("examiner-contents", (t, c) => {
     contents.textContent = c;
 });
 
+socket.on("examiner-dictee-update-reply", (err) => {
+    if (err)
+        sonner.show(`Oei, er ging iets mis: ${err.message}`, "alert-circle", "red-bg");
+    else
+        sonner.show("Het dictee is succesvol opgeslagen!", "check-circle", "green-bg");
+});
+
 // Participants
 const participantList = document.getElementById("participant-list");
 
