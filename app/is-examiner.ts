@@ -1,11 +1,11 @@
-import { join } from "path";
 import { readFile } from "fs";
 
-const examinersFile = join(import.meta.dirname, "..", "data", "examiners.json");
+import { paths } from "./dictee";
+
 
 export const isExaminer = async (base64auth: string | undefined) => {
     return new Promise((res, rej) => {
-        readFile(examinersFile, (err, txt) => {
+        readFile(paths.examinersFile, (err, txt) => {
             if (err) rej(err.message);
 
             const accounts = JSON.parse(new TextDecoder().decode(txt));

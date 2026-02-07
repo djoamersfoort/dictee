@@ -12,8 +12,6 @@ type Participant = {
 type Dictee = {
     state: State,
     participants: Array<Participant | undefined>,
-    contentsFile: string,
-    resultsFile: string,
     add: (firstName: string, lastName: string, socketID: string) => void,
     kick: (index: number) => void,
     isFull: () => boolean,
@@ -22,13 +20,17 @@ type Dictee = {
     setBusy: () => void
 };
 
-export const maxParticipants = 10;
+const maxParticipants = 10;
+
+export const paths = {
+    contentsFile: join(import.meta.dirname, "..", "data", "contents.txt"),
+    resultsFile: join(import.meta.dirname, "..", "data", "results.json"),
+    examinersFile: join(import.meta.dirname, "..", "data", "examiners.json")
+};
 
 export const dictee: Dictee = {
     state: "closed",
     participants: new Array(maxParticipants),
-    contentsFile: join(import.meta.dirname, "..", "data", "contents.txt"),
-    resultsFile: join(import.meta.dirname, "..", "data", "results.json"),
     add(firstName: string, lastName: string, socketID: string) {
         let i;
         for (i=0; i<maxParticipants; i++) {

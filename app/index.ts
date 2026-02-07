@@ -7,18 +7,14 @@ import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "fs";
 
 import { isExaminer } from "./is-examiner";
-import { dictee, type State } from "./dictee";
+import { dictee, paths, type State } from "./dictee";
 
 
 // `data` directory existence check
 if (!existsSync(join(import.meta.dirname, "..", "data")))
     mkdirSync(join(import.meta.dirname, "..", "data"));
 
-for (const i of [
-    join(import.meta.dirname, "..", "data", "contents.txt"),
-    dictee.resultsFile,
-    join(import.meta.dirname, "..", "data", "examiners.json")
-]) {
+for (const i of [paths.contentsFile, paths.resultsFile, paths.examinersFile]) {
     if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
 }
 
@@ -113,11 +109,11 @@ io.on("connection", socket => {
         const grade = (score * 9 / answerKeys.length + 1).toFixed(1);
 
         const results = JSON.parse(new TextDecoder().decode(
-            readFileSync(dictee.resultsFile)
+            readFileSync(paths.resultsFile)
         ));
         results[`${sender.firstName} ${sender.lastName}`] = {score, answers};
 
-        writeFile(dictee.resultsFile, JSON.stringify(results, null, 4), (err) => {
+        writeFile(paths.resultsFile, JSON.stringify(results, null, 4), (err) => {
             if (err) throw err;
             socket.emit("results", score, answerKeys.length, grade, (+grade >= 5.5));
 
@@ -147,7 +143,7 @@ io.on("connection", socket => {
     isExaminer(auth).then(() => {
         if (!examinerSocketIDs.includes(socket.id)) examinerSocketIDs.push(socket.id);
 
-        const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile)).split("\n");
+        const contents = new TextDecoder().decode(readFileSync(paths.contentsFile)).split("\n");
         const title = contents.shift();
         if (!contents[contents.length - 1]) contents.pop();
 
@@ -159,7 +155,7 @@ io.on("connection", socket => {
             if (dictee.state !== "closed") return;
 
             const contents = body + (body.endsWith("\n") ? "" : "\n");
-            writeFile(join(import.meta.dirname, "..", "data", "contents.txt"), contents, err => {
+            writeFile(paths.contentsFile, contents, err => {
                 socket.emit("examiner-dictee-update-reply", err);
 
                 const contents = body.split("\n");
@@ -195,7 +191,7 @@ io.on("connection", socket => {
                 const closeMessage = "Oei, de examinator heeft het dictee afgesloten.";
                 broadcast("force-quit", closeMessage);
             } else if (to === "busy") {
-                const contents = new TextDecoder().decode(readFileSync(dictee.contentsFile));
+                const contents = new TextDecoder().decode(readFileSync(paths.contentsFile));
                 const dicteePayload = contents.replaceAll(/\{(.*?)\}/g, "{}");
                 broadcastParticipants("dictee-start", dicteePayload);
 
