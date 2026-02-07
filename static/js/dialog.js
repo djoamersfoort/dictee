@@ -15,6 +15,10 @@ const dialog = {
             return;
         }
 
+        document.body.style.overflowY = "hidden";
+        this.overlay.style.top = `${scrollY}px`;
+        this.overlay.style.pointerEvents = "all";
+
         document.body.style.setProperty("--dialog-transition-time", `${this.fadetime}ms`);
         const rect = startTarget.getBoundingClientRect();
 
@@ -75,6 +79,9 @@ const dialog = {
                 this.element.style.transition =
                 this.element.style.width = this.element.style.height
                 this.element.style.left = this.element.style.top = "";
+
+                document.body.style.overflowY = "";
+                this.overlay.style.pointerEvents = "";
             }, this.fadetime);
         }, this.fadetime);
     }

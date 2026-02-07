@@ -2,6 +2,12 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
 
+const shortDisableOverflow = () => {
+    document.body.style.overflowY = "hidden";
+    setTimeout(() => document.body.style.overflowY = "", 3000);
+};
+shortDisableOverflow();
+
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");

@@ -38,11 +38,10 @@
 }
 
 body {
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
+    margin: var(--spacing);
+    overflow-x: hidden;
     background: var(--main-gradient-bg);
+    background-attachment: fixed;
     font-family: Montserrat, sans-serif;
     line-height: 1.25;
     color: #fff;
@@ -56,9 +55,9 @@ body::backdrop {
 .container {
     display: grid;
     gap: var(--spacing);
-    width: calc(100% - var(--spacing) * 2);
-    height: calc(100% - var(--spacing) * 2);
-    margin: var(--spacing);
+    width: 100%;
+    height: calc(100vh - var(--spacing) * 2);
+    margin: 0;
 
     & > div {
         animation-name: introduction;
@@ -71,14 +70,16 @@ body::backdrop {
         "Participate Participate How"
         "Why Experiences Experiences"
         "Footer Footer Footer";
-        grid-template-rows: 0fr 2fr 2fr 0fr;
+        grid-template-rows: 0fr auto auto 0fr;
         grid-template-columns: 1fr 0.5fr 1fr;
     }
     &.Dictee {
+        height: fit-content;
         display: none;
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
+        margin: var(--spacing) 0;
 
         .DicteeForm, .DicteeSubmit {
             width: 50%;
@@ -309,13 +310,15 @@ body::backdrop {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+
             & > * {
                 margin: var(--spacing);
             }
+            .rating {
+                display: flex;
+                margin-top: -10px;
+            }
         }
-    }
-    .rating {
-        display: flex;
     }
     & > * {
         margin: var(--spacing);
@@ -461,8 +464,8 @@ button.main-bg {
     position: absolute;
     left: 0;
     top: 0;
-    width: 110vw;
-    height: 110vh;
+    width: 100vw;
+    height: 100vh;
     z-index: 2;
     pointer-events: none;
     background-color: #000c;

@@ -8,9 +8,17 @@ const participateLabel = document.getElementById("participation-state");
 const setParticipating = (to) => {
     document.querySelector(".Home").style.display = (to) ? "none" : "grid";
     document.querySelector(".Dictee").style.display = (to) ? "flex" : "none";
+
+    shortDisableOverflow();
     onbeforeunload = (to) ? () => "Je kunt hier niet meer terugkomen als je refresht!" : null;
 };
 const isParticipating = () => document.querySelector(".Home").style.display === "none";
+
+const shortDisableOverflow = () => {
+    document.body.style.overflowY = "hidden";
+    setTimeout(() => document.body.style.overflowY = "", 3000);
+};
+shortDisableOverflow();
 
 // Homepage
 participateButton.addEventListener("click", () => dialog.open("rules", participateButton));
