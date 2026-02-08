@@ -2,12 +2,6 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
 
-const shortDisableOverflow = () => {
-    document.body.style.overflowY = "hidden";
-    setTimeout(() => document.body.style.overflowY = "", 3000);
-};
-shortDisableOverflow();
-
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");
@@ -23,17 +17,21 @@ const validateContentsInput = (e) => {
     const openWordCount = (openWords) ? openWords.length : 0;
     const curlyBracesOpen = e.target.value.match(/\{/g) ? e.target.value.match(/\{/g).length : 0;
     const curlyBracesClose = e.target.value.match(/\}/g) ? e.target.value.match(/\}/g).length : 0;
+    const curlyBracesNothingBetween = /\{\}/g.test(e.target.value);
+
+    let valid = true;
     let output = `De kandidaten moeten in dit dictee ${openWordCount} ${(openWordCount === 1) ? "antwoord":"antwoorden"} geven`;
 
-    if (curlyBracesOpen != curlyBracesClose)
+    if (curlyBracesOpen != curlyBracesClose || curlyBracesNothingBetween) {
         output += ", maar je syntax is niet helemaal lekker.";
-    else if (openWordCount === 0)
+        valid = false;
+    } else if (openWordCount === 0) {
         output += ". Waar is het dictee nou gebleven?";
-    else
-        output += ".";
+        valid = false;
+    } else output += ".";
 
     statusText.textContent = output;
-    saveButton.disabled = (openWordCount === 0 || curlyBracesOpen != curlyBracesClose);
+    saveButton.disabled = valid;
 };
 
 contents.addEventListener("input", validateContentsInput);

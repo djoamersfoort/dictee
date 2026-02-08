@@ -8,8 +8,16 @@ const dialog = {
     /**
      * @param {string} id
      * @param {HTMLElement} startTarget
+     * @param {any} agreeButtons
      */
-    open(id, startTarget) {
+    open(id, startTarget, agreeButtons) {
+        if (id === "rules") {
+            this.element.querySelector("#rules-close").style.display = (agreeButtons) ? "none" : "";
+
+            this.element.querySelector("#rules-disagree").style.display =
+            this.element.querySelector("#rules-agree").style.display = (agreeButtons) ? "" : "none";
+        }
+
         if (this.current.id) {
             this.switch(id);
             return;

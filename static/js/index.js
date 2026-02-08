@@ -14,14 +14,11 @@ const setParticipating = (to) => {
 };
 const isParticipating = () => document.querySelector(".Home").style.display === "none";
 
-const shortDisableOverflow = () => {
-    document.body.style.overflowY = "hidden";
-    setTimeout(() => document.body.style.overflowY = "", 3000);
-};
-shortDisableOverflow();
-
 // Homepage
-participateButton.addEventListener("click", () => dialog.open("rules", participateButton));
+document.getElementById("rules-link").addEventListener("click", e => dialog.open("rules", e.target, false));
+participateButton.addEventListener("click", () => dialog.open("rules", participateButton, true));
+
+document.getElementById("rules-close").addEventListener("click", () => dialog.close());
 document.getElementById("rules-disagree").addEventListener("click", () => dialog.close());
 document.getElementById("rules-agree").addEventListener("click", () => dialog.switch("name-inputs"));
 document.getElementById("names-back").addEventListener("click", () => dialog.switch("rules"));
@@ -62,6 +59,10 @@ document.getElementById("dictee-submit").addEventListener("click", () => {
 
         return;
     }
+
+    document.getElementById("dictee-submit").classList.remove("confirm-warning");
+    document.getElementById("dictee-submit").disabled = true;
+    document.getElementById("dictee-submit-btn").textContent = "Wacht op de uitslag...";
 
     const answers = [...document.querySelectorAll(".DicteeForm input")].map(i => i.value);
     socket.emit("submit-answers", answers);
@@ -112,7 +113,7 @@ document.getElementById("view-results").addEventListener("click", () => {
     document.getElementById("answer-switcher").style.display = "flex";
 
     document.getElementById("dictee-form-header").textContent = "Je resultaat";
-    document.getElementById("dictee-submit").classList.remove("confirm-warning");
+    document.getElementById("dictee-submit").disabled = false;
     document.getElementById("dictee-submit").classList.add("return-to-main");
     document.getElementById("dictee-submit-btn").textContent = "Terug naar homepage";
     document.getElementById("dictee-submit-h3").textContent = "Genoeg gezien?";

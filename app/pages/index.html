@@ -17,7 +17,10 @@
                     <img src="https://aanmelden.djoamersfoort.nl/static/img/logo.png" alt="Logo DJO">
                     <h1>Dictee</h1>
                 </div>
-                <a href="/examinator">Voor examinatoren</a>
+                <div class="hyperlinks">
+                    <a id="rules-link">Reglement</a>
+                    <a href="/examinator">Voor examinatoren</a>
+                </div>
             </div>
 
             <div class="card Participate">
@@ -41,7 +44,7 @@
                     <li>Wacht totdat de examinator het dictee start.</li>
                     <li>Je krijgt een tekst te zien waarin woorden zijn weggelaten.<br>De examinator leest deze hardop voor.</li>
                     <li>Vul de weggelaten woorden in die de examinator uitspreekt.</li>
-                    <li>Zodra je alles hebt ingevuld, klik je op "Insturen".</li>
+                    <li>Zodra je alles hebt ingevuld, klik je op "Inleveren!".</li>
                     <li>Je krijgt direct de uitslag.</li>
                 </ol>
             </div>
@@ -216,6 +219,10 @@
                         </ol>
 
                         <div class="dialog-buttons">
+                            <button id="rules-close" class="main-bg">
+                                <span>Sluiten</span>
+                                <img src="/static/icons/x.svg" alt="Close" class="img-r">
+                            </button>
                             <button id="rules-disagree" class="red-bg">
                                 <img src="/static/icons/x.svg" alt="Nuh-uh" class="img-l">
                                 <span>Ik ga niet akkoord</span>
@@ -288,6 +295,7 @@
             <span id="sonner-text"></span>
         </div>
 
+        <script src="/static/js/general.js"></script>
         <script src="/static/js/dialog.js"></script>
         <script src="/static/js/sonner.js"></script>
         <script src="/static/js/index.js" type="module"></script>

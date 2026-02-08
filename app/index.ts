@@ -204,22 +204,18 @@ io.on("connection", socket => {
 
 // Webpage
 app.get("/", c => {
-    return c.text(
-        new TextDecoder().decode(readFileSync(join(import.meta.dirname, "pages", "index.html"))),
-        200,
-        {"Content-Type": "text/html"}
-    );
+    return c.text(new TextDecoder().decode(
+        readFileSync(join(import.meta.dirname, "pages", "index.html"))
+    ), 200, {"Content-Type": "text/html"});
 });
 
 app.get("/examinator", async c => {
     if (c.req.header("Authorization")) {
         const valid = await isExaminer(c.req.header("Authorization")).then(() => true).catch(() => false);
 
-        if (valid) return c.text(
-            new TextDecoder().decode(readFileSync(join(import.meta.dirname, "pages", "examiner.html"))),
-            200,
-            {"Content-Type": "text/html"}
-        );
+        if (valid) return c.text(new TextDecoder().decode(
+            readFileSync(join(import.meta.dirname, "pages", "examiner.html"))
+        ), 200, {"Content-Type": "text/html"});
     }
 
     c.header("WWW-Authenticate", `Basic realm="Login required"`);
@@ -241,4 +237,4 @@ export default {
 
         return app.fetch(req, server);
     }
-}
+};
