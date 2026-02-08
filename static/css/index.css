@@ -285,6 +285,11 @@ body::backdrop {
 
                 b {
                     margin-left: calc(var(--spacing) - 8px);
+
+                    span {
+                        font-weight: normal;
+                        font-size: small;
+                    }
                 }
                 em {
                     color: var(--gray-color);
@@ -528,9 +533,10 @@ button.main-bg {
     }
     img[src*="tenor"] {
         display: block;
-        margin: calc(var(--spacing) * 3) auto;
+        margin: var(--spacing) auto;
         width: 50%;
         border-radius: var(--spacing);
+        pointer-events: none;
     }
 
     .dialog-text {
@@ -579,23 +585,23 @@ button.main-bg {
             font-size: 8em;
             margin: 0;
         }
-        h4, h5 {
-            text-align: center;
-        }
         h4 {
+            text-align: center;
             font-size: 1.5em;
             margin: 0.3em 0;
         }
-        h5 {
-            color: var(--gray-color);
-            font-size: 1.1em;
-            margin: 2em 0;
-            span {
-                color: var(--main-color);
-            }
-        }
         button {
             margin-top: 2em;
+        }
+    }
+
+    h5 {
+        text-align: center;
+        color: var(--gray-color);
+        font-size: 1.1em;
+        margin: 2em 0;
+        span {
+            color: var(--main-color);
         }
     }
 }

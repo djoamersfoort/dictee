@@ -59,8 +59,12 @@ socket.on("examiner-participants", participants => {
     for (let i=0; i<participants.length; i++) {
         if (!participants[i]) continue;
 
+        const statusText = document.createElement("span");
+        statusText.textContent = (participants[i].answers.length > 0) ? "ingeleverd!" : "nog niet ingeleverd";
+
         const label = document.createElement("b");
-        label.textContent = `${participants[i].firstName} ${participants[i].lastName}`;
+        label.innerHTML = `${participants[i].firstName} ${participants[i].lastName} <em>#${i + 1}</em><br>`;
+        label.innerHTML += statusText.outerHTML;
 
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");

@@ -5,17 +5,19 @@ const dialog = {
     current: {id: "", element: null},
     flexDivs: ["result"],
     fadetime: 600,
+    forcefulClose: true,
     /**
      * @param {string} id
      * @param {HTMLElement} startTarget
-     * @param {any} agreeButtons
+     * @param {any} justViewing
      */
-    open(id, startTarget, agreeButtons) {
+    open(id, startTarget, justViewing) {
         if (id === "rules") {
-            this.element.querySelector("#rules-close").style.display = (agreeButtons) ? "none" : "";
+            this.forcefulClose = !justViewing;
+            this.element.querySelector("#rules-close").style.display = (justViewing) ? "none" : "";
 
             this.element.querySelector("#rules-disagree").style.display =
-            this.element.querySelector("#rules-agree").style.display = (agreeButtons) ? "" : "none";
+            this.element.querySelector("#rules-agree").style.display = (justViewing) ? "" : "none";
         }
 
         if (this.current.id) {

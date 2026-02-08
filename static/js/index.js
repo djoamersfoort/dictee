@@ -139,22 +139,26 @@ socket.on("dictee-state", (state, waiting, full) => {
     participateButton.disabled = (state !== "open" || full);
 });
 
-socket.on("participate-reply", (err) => {
+socket.on("participate-reply", (err, pid) => {
     if (err) {
         document.getElementById("name-error").textContent = err;
         return;
     }
+    const participantID = isNaN(pid) ? "---" : +pid + 1;
 
     document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message));
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
+    document.getElementById("participant-id").textContent = `#${participantID}`;
     dialog.switch("waiting-room");
 });
 
 socket.on("force-quit", (reason) => {
-    if (dialog.current.element || isParticipating())
+    const dialogInvolved = (dialog.current.element && !dialog.forcefulClose);
+
+    if (dialogInvolved || isParticipating())
         sonner.show(reason, "alert-circle", "red-bg");
 
-    if (dialog.current.element) dialog.close();
+    if (dialogInvolved) dialog.close();
     if (isParticipating()) setParticipating(false);
 });
 

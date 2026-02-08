@@ -81,8 +81,7 @@ io.on("connection", socket => {
             return;
         }
 
-        dictee.add(firstName, lastName, socket.id);
-        socket.emit("participate-reply", null);
+        socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
 
         broadcast("dictee-state", dictee.state, dictee.participants.filter(p => p).length, dictee.isFull());
         examinerUpdate();
@@ -92,12 +91,14 @@ io.on("connection", socket => {
         const sender = dictee.participants.filter(p => p && p.socketID === socket.id)[0];
         if (!sender) return;
 
-        sender.answers = answers;
         const fetchedAnswerKeys = new TextDecoder().decode(
             readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))
         ).match(formInput) as string[];
 
         if (fetchedAnswerKeys.length !== answers.length) return;
+
+        sender.answers = answers;
+        examinerUpdate();
 
         const answerKeys: string[] = [];
         for (const a of fetchedAnswerKeys) answerKeys.push(a.replaceAll(/(\{|\})/g, ""));

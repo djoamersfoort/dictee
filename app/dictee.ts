@@ -12,7 +12,7 @@ type Participant = {
 type Dictee = {
     state: State,
     participants: Array<Participant | undefined>,
-    add: (firstName: string, lastName: string, socketID: string) => void,
+    add: (firstName: string, lastName: string, socketID: string) => number,
     kick: (index: number) => void,
     isFull: () => boolean,
     setOpen: () => void,
@@ -39,6 +39,7 @@ export const dictee: Dictee = {
                 break;
             }
         }
+        return i;
     },
     kick(index: number) {
         delete this.participants[index];
