@@ -138,7 +138,7 @@ io.on("connection", socket => {
 
     const examinerUpdate = () => {
         broadcastExaminers("examiner-participants", dictee.participants);
-        broadcastExaminers("examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
+        broadcastExaminers("examiner-dashboard", dictee.state, dictee.participants.filter(p => p).length > 0, dictee.lichtkrantAPI);
     };
 
     isExaminer(auth).then(() => {
@@ -150,7 +150,7 @@ io.on("connection", socket => {
 
         socket.emit("examiner-contents", title, contents.join("\n"));
         socket.emit("examiner-participants", dictee.participants);
-        socket.emit("examiner-state", dictee.state, dictee.participants.filter(p => p).length > 0);
+        socket.emit("examiner-dashboard", dictee.state, dictee.participants.filter(p => p).length > 0, dictee.lichtkrantAPI);
 
         socket.on("examiner-dictee-update", (body: string) => {
             if (dictee.state !== "closed") return;
@@ -200,6 +200,10 @@ io.on("connection", socket => {
                 broadcastNonParticipants("force-quit", startMessage);
             }
         });
+        socket.on("examiner-set-lichtkrant-api", (to: boolean) => {
+            dictee.lichtkrantAPI = to;
+            examinerUpdate();
+        });
     }).catch(() => {});
 });
 
@@ -223,7 +227,26 @@ app.get("/examinator", async c => {
     return c.text("401 Joch Detected", 401, {"Content-Type": "text/plain"});
 });
 
-app.use("/static/*", serveStatic({root: join(import.meta.dirname, "..")}))
+app.use("/static/*", serveStatic({root: join(import.meta.dirname, "..")}));
+
+app.get("/api/v1/lichtkrant", c => {
+    if (!dictee.lichtkrantAPI) return c.text(
+        "[]", 200, {"Content-Type": "application/json"}
+    );
+
+    const payload = [];
+    for (const p of dictee.participants.filter(p => p)) {
+        payload.push({
+            name: p?.firstName,
+            score: p?.answers.length,
+            total: p?.answers.length
+        });
+    }
+
+    return c.text(
+        JSON.stringify(payload, null, 4), 200, {"Content-Type": "application/json"}
+    );
+});
 
 export default {
     ...engine.handler(),

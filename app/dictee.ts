@@ -12,6 +12,7 @@ type Participant = {
 type Dictee = {
     state: State,
     participants: Array<Participant | undefined>,
+    lichtkrantAPI: boolean,
     add: (firstName: string, lastName: string, socketID: string) => number,
     kick: (index: number) => void,
     isFull: () => boolean,
@@ -31,6 +32,7 @@ export const paths = {
 export const dictee: Dictee = {
     state: "closed",
     participants: new Array(maxParticipants),
+    lichtkrantAPI: false,
     add(firstName: string, lastName: string, socketID: string) {
         let i;
         for (i=0; i<maxParticipants; i++) {

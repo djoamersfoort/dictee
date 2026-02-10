@@ -35,6 +35,8 @@ addEventListener("keydown", e => {
 
         if (dialog.current.id === "name-inputs")
             document.getElementById("names-confirm").click();
+    } else if (e.key === "Escape" && dialog.current.id === "rules") {
+        dialog.close();
     }
 });
 

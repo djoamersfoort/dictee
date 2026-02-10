@@ -140,7 +140,7 @@ body::backdrop {
         grid-template-areas:
         "Heading Heading"
         "Contents Participants"
-        "Contents Status"
+        "Contents Dashboard"
         "Footer Footer";
         grid-template-rows: 0fr 2fr 1fr 0fr;
         grid-template-columns: 2fr 1fr;
@@ -179,7 +179,8 @@ body::backdrop {
         margin: 0.5em;
     }
 }
-.heading a, .footer a {
+
+a {
     color: inherit;
     height: fit-content;
     text-decoration: underline;
@@ -187,6 +188,17 @@ body::backdrop {
 
     &:hover {
         text-decoration: none;
+    }
+
+    &[target="_blank"]::after {
+        content: "";
+        background-image: url("/static/icons/external-link.svg");
+        background-size: 100%;
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        margin-left: 2px;
+        vertical-align: text-top;
     }
 }
 
@@ -207,13 +219,6 @@ body::backdrop {
             justify-content: space-between;
             align-items: center;
             gap: 3rem;
-
-            h2 span.red {
-                color: salmon;
-            }
-            h2 span.green {
-                color: lightgreen;
-            }
         }
     }
     &.How {
@@ -306,23 +311,31 @@ body::backdrop {
             }
         }
     }
-    &.Status {
-        grid-area: Status;
+    &.Dashboard {
+        grid-area: Dashboard;
         animation-delay: 0.7s;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
 
-        #dictee-state {
-            margin: 1em;
-        }
-        #state-buttons {
+        #dashboard-items {
             display: flex;
-            flex-direction: row;
-            gap: var(--spacing);
+            flex-direction: column;
+            justify-content: space-between;
 
-            button {
-                display: none;
+            div {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: var(--spacing);
+
+                h2 {
+                    margin: 0.5em 0;
+                }
+                button {
+                    display: none;
+                    width: fit-content;
+                    font-size: 1.2em;
+                    padding-left: 32px;
+                    padding-right: 32px;
+                }
             }
         }
     }
@@ -426,6 +439,14 @@ button {
         animation-name: confirm-warning;
         animation-duration: 0.5s;
         animation-iteration-count: infinite;
+    }
+    &.small {
+        font-size: 1.2em;
+        font-weight: bold;
+
+        img {
+            height: 24px;
+        }
     }
 }
 
@@ -566,15 +587,6 @@ button.main-bg {
         display: flex;
         gap: var(--spacing);
         margin: var(--dialog-spacing) 0;
-
-        button {
-            font-size: 1.2em;
-            font-weight: bold;
-
-            img {
-                height: 24px;
-            }
-        }
     }
 
     #result {

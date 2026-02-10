@@ -2,6 +2,8 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
 
+const answers = [];
+
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");
@@ -31,7 +33,7 @@ const validateContentsInput = (e) => {
     } else output += ".";
 
     statusText.textContent = output;
-    saveButton.disabled = valid;
+    saveButton.disabled = !valid;
 };
 
 contents.addEventListener("input", validateContentsInput);
@@ -39,6 +41,10 @@ contents.addEventListener("input", validateContentsInput);
 socket.on("examiner-contents", (t, c) => {
     title.value = t;
     contents.textContent = c;
+
+    const derivedAnswers = [];
+    c.match(/\{(.+?)\}/g).forEach(a => derivedAnswers.push(a.replace(/\{|\}/g, "")));
+    answers.splice(0, answers.length, ...derivedAnswers);
 });
 
 socket.on("examiner-dictee-update-reply", (err) => {
@@ -59,8 +65,13 @@ socket.on("examiner-participants", participants => {
     for (let i=0; i<participants.length; i++) {
         if (!participants[i]) continue;
 
-        const statusText = document.createElement("span");
-        statusText.textContent = (participants[i].answers.length > 0) ? "ingeleverd!" : "nog niet ingeleverd";
+        const statusText = document.createElement("a");
+        if (participants[i].answers.length > 0) {
+            console.log(participants[i]);
+            statusText.textContent = `${participants[i].answers.length} ingevuld`;
+        } else {
+            statusText.textContent = "Nog niet klaar";
+        }
 
         const label = document.createElement("b");
         label.innerHTML = `${participants[i].firstName} ${participants[i].lastName} <em>#${i + 1}</em><br>`;
@@ -91,11 +102,17 @@ const toClosed = document.getElementById("state-to-closed");
 const toOpen = document.getElementById("state-to-open");
 const toBusy = document.getElementById("state-to-busy");
 
+const lichtkrantAPIon = document.getElementById("lichtkrant-api-on");
+const lichtkrantAPIoff = document.getElementById("lichtkrant-api-off");
+
 toClosed.addEventListener("click", () => socket.emit("examiner-set-state", "closed"));
 toOpen.addEventListener("click", () => socket.emit("examiner-set-state", "open"));
 toBusy.addEventListener("click", () => socket.emit("examiner-set-state", "busy"));
 
-socket.on("examiner-state", (state, participantsIn) => {
+lichtkrantAPIon.addEventListener("click", () => socket.emit("examiner-set-lichtkrant-api", false));
+lichtkrantAPIoff.addEventListener("click", () => socket.emit("examiner-set-lichtkrant-api", true));
+
+socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
     if (state === "closed") {
         title.disabled = contents.disabled = false;
         validateContentsInput({target: contents});
@@ -107,7 +124,7 @@ socket.on("examiner-state", (state, participantsIn) => {
     } else if (state === "open" && participantsIn) {
         title.disabled = contents.disabled = saveButton.disabled = true;
         statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
-        stateLabel.textContent = "Klaar om te starten";
+        stateLabel.textContent = "Klaar voor start";
         stateLabel.className = "green-fg";
 
         toOpen.style.display = toClosed.style.display = "none";
@@ -115,7 +132,7 @@ socket.on("examiner-state", (state, participantsIn) => {
     } else if (state === "open") {
         title.disabled = contents.disabled = saveButton.disabled = true;
         statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
-        stateLabel.textContent = "Wachten op kandidaten";
+        stateLabel.textContent = "Geopend";
         stateLabel.className = "green-fg";
 
         toOpen.style.display = toBusy.style.display = "none";
@@ -129,6 +146,9 @@ socket.on("examiner-state", (state, participantsIn) => {
         toOpen.style.display = toBusy.style.display = "none";
         toClosed.style.display = "flex";
     }
+
+    lichtkrantAPIon.style.display = lichtkrantAPI ? "flex" : "";
+    lichtkrantAPIoff.style.display = lichtkrantAPI ? "" : "flex";
 });
 
 // socket disconnect action, no self-made event
