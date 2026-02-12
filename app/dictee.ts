@@ -2,26 +2,46 @@ import { join } from "path";
 
 export type State = "closed" | "open" | "busy";
 
-type Participant = {
-    firstName: string,
-    lastName: string,
-    answers: string[],
-    socketID: string
-};
+class Participant {
+    firstName: string;
+    lastName: string;
+    socketID: string;
+    result: {
+        answers: {given: string, correct: boolean}[],
+        grade: string, // toFixed(1) string
+        passed: boolean
+    } | undefined;
 
-type Dictee = {
-    state: State,
-    participants: Array<Participant | undefined>,
-    lichtkrantAPI: boolean,
-    add: (firstName: string, lastName: string, socketID: string) => number,
-    kick: (index: number) => void,
-    isFull: () => boolean,
-    setOpen: () => void,
-    setClosed: () => void,
-    setBusy: () => void
-};
+    constructor(firstName: string, lastName: string, socketID: string) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.socketID = socketID;
+    }
 
-const maxParticipants = 10;
+    getFullName() {
+        return `${this.firstName} ${this.lastName}`;
+    }
+
+    getCorrectAnswerCount() {
+        if (!this.result) return 0;
+
+        return this.result.answers.filter(a => a.correct).length;
+    }
+
+    check(givenAnswers: string[], correctAnswers: string[]) {
+        if (this.result || givenAnswers.length !== correctAnswers.length) return;
+
+        this.result = {answers: [], grade: "1.0", passed: false};
+
+        givenAnswers.forEach((given, i) => {
+            const correct = (given === correctAnswers[i]);
+            this.result?.answers.push({given, correct});
+        });
+
+        this.result.grade = (this.getCorrectAnswerCount() * 9 / correctAnswers.length + 1).toFixed(1);
+        this.result.passed = (+this.result.grade >= Dictee.passThreshold);
+    }
+}
 
 export const paths = {
     contentsFile: join(import.meta.dirname, "..", "data", "contents.txt"),
@@ -29,35 +49,61 @@ export const paths = {
     examinersFile: join(import.meta.dirname, "..", "data", "examiners.json")
 };
 
-export const dictee: Dictee = {
-    state: "closed",
-    participants: new Array(maxParticipants),
-    lichtkrantAPI: false,
+export class Dictee {
+    static maxParticipants = 10;
+    static passThreshold = 5.5;
+
+    #state: State;
+    #participants: Participant[];
+    lichtkrantAPI: boolean;
+
+    constructor() {
+        this.#state = "closed";
+        this.#participants = new Array(Dictee.maxParticipants);
+        this.lichtkrantAPI = false;
+    }
+
     add(firstName: string, lastName: string, socketID: string) {
         let i;
-        for (i=0; i<maxParticipants; i++) {
-            if (!this.participants[i]) {
-                this.participants[i] = {firstName, lastName, socketID, answers: []};
+        for (i=0; i<Dictee.maxParticipants; i++) {
+            if (!this.#participants[i]) {
+                this.#participants[i] = new Participant(firstName, lastName, socketID);
                 break;
             }
         }
         return i;
-    },
-    kick(index: number) {
-        delete this.participants[index];
-    },
+    }
+    remove(index: number) {
+        delete this.#participants[index];
+    }
     isFull() {
-        return this.participants.filter(p => p).length === maxParticipants;
-    },
+        return this.#participants.filter(p => p).length === Dictee.maxParticipants;
+    }
 
-    setOpen() {
-        this.state = "open";
-    },
-    setClosed() {
-        this.state = "closed";
-        for (let i=0; i<this.participants.length; i++) this.kick(i);
-    },
-    setBusy() {
-        this.state = "busy";
+    getState() {
+        return this.#state;
+    }
+    setState(to: State) {
+        if (to === "closed") {
+            this.lichtkrantAPI = false;
+            for (let i=0; i<this.#participants.length; i++) this.remove(i);
+        }
+
+        this.#state = to;
+    }
+
+    getParticipants(filtered: boolean = true) {
+        return filtered ? this.#participants.filter(p => p) : this.#participants;
+    }
+    getParticipantCount() {
+        return this.getParticipants().length;
+    }
+    getParticipantIndexBySocketID(socketID: string) {
+        const participant = this.#participants.filter(p => p && p.socketID === socketID)[0];
+
+        return participant ? this.#participants.indexOf(participant) : -1;
+    }
+    getParticipantBySocketID(socketID: string) {
+        return this.#participants[this.getParticipantIndexBySocketID(socketID)];
     }
 };

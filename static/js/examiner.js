@@ -66,9 +66,12 @@ socket.on("examiner-participants", participants => {
         if (!participants[i]) continue;
 
         const statusText = document.createElement("a");
-        if (participants[i].answers.length > 0) {
-            console.log(participants[i]);
-            statusText.textContent = `${participants[i].answers.length} ingevuld`;
+        if (participants[i].result && participants[i].result.answers.length > 0) {
+            const correctCount = participants[i].result.answers.filter(a => a.correct).length;
+            const passed = participants[i].result.passed ? "geslaagd" : "gezakt";
+
+            statusText.textContent =
+              `${correctCount}/${participants[i].result.answers.length} juist → ${participants[i].result.grade} ${passed}`;
         } else {
             statusText.textContent = "Nog niet klaar";
         }

@@ -11,6 +11,11 @@ const setParticipating = (to) => {
 
     shortDisableOverflow();
     onbeforeunload = (to) ? () => "Je kunt hier niet meer terugkomen als je refresht!" : null;
+
+    if (!to) {
+        socket.emit("leave");
+        document.exitFullscreen().catch(() => {});
+    }
 };
 const isParticipating = () => document.querySelector(".Home").style.display === "none";
 
