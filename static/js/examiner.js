@@ -97,6 +97,9 @@ socket.on("examiner-participants", participants => {
 
         participantList.appendChild(wrapper);
     }
+
+    document.getElementById("no-participants").style.display =
+      (participantList.children.length > 0) ? "none" : "";
 });
 
 // Status
