@@ -77,7 +77,7 @@ export class Dictee {
         delete this.#participants[index];
     }
     isFull() {
-        return this.#participants.filter(p => p).length === Dictee.maxParticipants;
+        return this.getParticipantCount() === Dictee.maxParticipants;
     }
 
     getState() {

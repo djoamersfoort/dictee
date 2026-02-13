@@ -112,8 +112,9 @@ io.on("connection", socket => {
         const results = JSON.parse(new TextDecoder().decode(
             readFileSync(paths.resultsFile)
         ));
-        results[`${sender.firstName} ${sender.lastName}`] = {
+        results[sender.socketID] = {
             displayName: sender.firstName,
+            fullName: `${sender.firstName} ${sender.lastName}`,
             ...sender.result
         };
 

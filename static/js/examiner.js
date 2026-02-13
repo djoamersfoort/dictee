@@ -65,13 +65,13 @@ socket.on("examiner-participants", participants => {
     for (let i=0; i<participants.length; i++) {
         if (!participants[i]) continue;
 
-        const statusText = document.createElement("a");
-        if (participants[i].result && participants[i].result.answers.length > 0) {
+        const statusText = document.createElement("span");
+        if (participants[i].result) {
             const correctCount = participants[i].result.answers.filter(a => a.correct).length;
-            const passed = participants[i].result.passed ? "geslaagd" : "gezakt";
 
+            statusText.className = (participants[i].result.passed) ? "green-fg" : "red-fg";
             statusText.textContent =
-              `${correctCount}/${participants[i].result.answers.length} juist → ${participants[i].result.grade} ${passed}`;
+              `${correctCount}/${participants[i].result.answers.length} = ${participants[i].result.grade}`;
         } else {
             statusText.textContent = "Nog niet klaar";
         }
@@ -80,20 +80,30 @@ socket.on("examiner-participants", participants => {
         label.innerHTML = `${participants[i].firstName} ${participants[i].lastName} <em>#${i + 1}</em><br>`;
         label.innerHTML += statusText.outerHTML;
 
+        const buttonWrapper = document.createElement("div");
+        buttonWrapper.classList.add("button-wrapper");
+
+        const viewButton = document.createElement("button");
+        viewButton.classList.add("main-bg");
+        viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${participants[i].firstName}'s results">`;
+        viewButton.disabled = (!participants[i].result);
+        viewButton.addEventListener("click", () => {
+            // todo: add + open dialog
+        });
+
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");
+        kickButton.innerHTML = `<img src="/static/icons/user-x.svg" alt="Kick ${participants[i].firstName}">`;
         kickButton.addEventListener("click", () => {
             kickButton.classList.contains("confirm-warning") ? kickParticipant(i) : kickButton.classList.add("confirm-warning");
         });
 
-        const kickButtonIcon = document.createElement("img");
-        kickButtonIcon.src = "/static/icons/user-x.svg";
-        kickButtonIcon.alt = `Kick ${participants[i].firstName}`;
-        kickButton.appendChild(kickButtonIcon);
+        buttonWrapper.appendChild(viewButton);
+        buttonWrapper.appendChild(kickButton);
 
         const wrapper = document.createElement("p");
         wrapper.appendChild(label);
-        wrapper.appendChild(kickButton);
+        wrapper.appendChild(buttonWrapper);
 
         participantList.appendChild(wrapper);
     }
@@ -155,6 +165,7 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
 
     lichtkrantAPIon.style.display = lichtkrantAPI ? "flex" : "";
     lichtkrantAPIoff.style.display = lichtkrantAPI ? "" : "flex";
+    lichtkrantAPIoff.disabled = (state !== "busy");
 });
 
 // socket disconnect action, no self-made event
