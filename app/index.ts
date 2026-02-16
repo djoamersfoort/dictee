@@ -153,7 +153,7 @@ io.on("connection", socket => {
 
         const contents = new TextDecoder().decode(readFileSync(paths.contentsFile)).split("\n");
         const title = contents.shift();
-        if (!contents[contents.length - 1]) contents.pop();
+        while (!contents[contents.length - 1]?.trim()) contents.pop();
 
         socket.emit("examiner-contents", title, contents.join("\n"));
         socket.emit("examiner-participants", dictee.getParticipants(false));
@@ -162,12 +162,14 @@ io.on("connection", socket => {
         socket.on("examiner-dictee-update", (body: string) => {
             if (dictee.getState() !== "closed") return;
 
-            writeFile(paths.contentsFile, body, err => {
+            const lines = body.split("\n");
+            while (!lines[lines.length - 1]?.trim()) lines.pop();
+
+            writeFile(paths.contentsFile, lines.join("\n"), err => {
                 socket.emit("examiner-dictee-update-reply", err);
 
-                const contents = body.split("\n");
-                const title = contents.shift()?.replaceAll(/\{(.*?)\}/g, "$1");
-                broadcastExaminers("examiner-contents", title, contents.join("\n"));
+                const title = lines.shift()?.replaceAll(/\{(.*?)\}/g, "$1");
+                broadcastExaminers("examiner-contents", title, lines.join("\n"));
             });
         });
 
