@@ -79,10 +79,10 @@ body::backdrop {
     }
     &.Home {
         grid-template-areas:
-        "Heading Heading Heading"
-        "Participate Participate How"
-        "Why Experiences Experiences"
-        "Footer Footer Footer";
+          "Heading Heading Heading"
+          "Participate Participate How"
+          "Why Experiences Experiences"
+          "Footer Footer Footer";
         grid-template-rows: 0fr auto auto 0fr;
         grid-template-columns: 1fr 0.5fr 1fr;
     }
@@ -138,11 +138,11 @@ body::backdrop {
     }
     &.Examiner {
         grid-template-areas:
-        "Heading Heading"
-        "Contents Participants"
-        "Contents Dashboard"
-        "Footer Footer";
-        grid-template-rows: 0fr 2fr 1fr 0fr;
+          "Heading Heading"
+          "Contents Participants"
+          "Contents Dashboard"
+          "Footer Footer";
+        grid-template-rows: 0fr 1fr 0fr 0fr;
         grid-template-columns: 2fr 1fr;
     }
 }
@@ -305,16 +305,19 @@ a {
                     display: flex;
                     gap: calc(var(--spacing) / 2);
                     background: unset;
+                }
+                button {
+                    width: 40px;
+                    height: 40px;
 
-                    button {
-                        width: 40px;
-                        height: 40px;
-
-                        img {
-                            height: 24px;
-                        }
+                    img {
+                        height: 24px;
                     }
                 }
+            }
+            hr {
+                width: calc(100% - 16px);
+                margin: 0 8px;
             }
         }
         #no-participants img {
@@ -620,6 +623,20 @@ button.main-bg {
         }
         button {
             margin-top: 2em;
+        }
+    }
+    #inspector {
+        #comparison {
+            display: flex;
+            gap: var(--dialog-spacing);
+
+            div {
+                width: 50%;
+            }
+        }
+        #comparison, button {
+            width: calc(100% - var(--dialog-spacing) * 2);
+            margin: var(--spacing) var(--dialog-spacing);
         }
     }
 

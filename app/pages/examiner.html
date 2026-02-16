@@ -82,13 +82,6 @@
                             <img src="/static/icons/code.svg" alt="API off" class="img-r">
                         </button>
                     </div>
-                    <div>
-                        <h2>Archief</h2>
-                        <button id="open-archive" class="main-bg small">
-                            <span>Bekijken</span>
-                            <img src="/static/icons/arrow-right.svg" alt="Archive" class="img-r">
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -98,12 +91,35 @@
             </div>
         </div>
 
+        <div id="overlay">
+            <div class="dialog">
+                <div id="inspector">
+                    <h1>Dictee van <span id="comparison-name" class="main-fg"></span></h1>
+                    <div id="comparison">
+                        <div>
+                            <h3>Gegeven antwoorden</h3>
+                            <p id="dictee-given"></p>
+                        </div>
+                        <div>
+                            <h3>Juiste antwoorden</h3>
+                            <p id="dictee-correct"></p>
+                        </div>
+                    </div>
+                    <button id="inspector-close" class="main-bg small">
+                        <span>Sluiten</span>
+                        <img src="/static/icons/x.svg" alt="Close" class="img-r">
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="sonner">
             <img id="sonner-icon">
             <span id="sonner-text"></span>
         </div>
 
         <script src="/static/js/general.js"></script>
+        <script src="/static/js/dialog.js"></script>
         <script src="/static/js/sonner.js"></script>
         <script src="/static/js/examiner.js" type="module"></script>
         <noscript>

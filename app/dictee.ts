@@ -1,7 +1,19 @@
 import { join } from "path";
-import { writeFile } from "fs";
+import { readFileSync, writeFile } from "fs";
 
 export type State = "closed" | "open" | "busy";
+
+type ResultsFile = {
+    [key: string]: {
+        firstName: string,
+        lastName: string,
+        result: {
+            answers: {given: string, correct: boolean}[],
+            grade: string,
+            passed: boolean
+        }
+    }
+};
 
 class Participant {
     firstName: string;
@@ -51,8 +63,8 @@ export const paths = {
 };
 
 export class Dictee {
-    static maxParticipants = 10;
-    static passThreshold = 5.5;
+    static maxParticipants = Number(process.env.MAX_PARTICIPANTS) || 10;
+    static passThreshold = Number(process.env.PASS_THRESHOLD) || 5.5;
 
     #state: State;
     #participants: Participant[];
@@ -108,5 +120,11 @@ export class Dictee {
     }
     getParticipantBySocketID(socketID: string) {
         return this.#participants[this.getParticipantIndexBySocketID(socketID)];
+    }
+
+    getFinishedParticipants(): ResultsFile {
+        return JSON.parse(
+            new TextDecoder().decode(readFileSync(paths.resultsFile))
+        );
     }
 };

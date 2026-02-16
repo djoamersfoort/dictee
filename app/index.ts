@@ -113,9 +113,9 @@ io.on("connection", socket => {
             readFileSync(paths.resultsFile)
         ));
         results[sender.socketID] = {
-            displayName: sender.firstName,
-            fullName: `${sender.firstName} ${sender.lastName}`,
-            ...sender.result
+            firstName: sender.firstName,
+            lastName: sender.lastName,
+            result: sender.result
         };
 
         writeFile(paths.resultsFile, JSON.stringify(results, null, 4), (err) => {
@@ -144,7 +144,7 @@ io.on("connection", socket => {
     });
 
     const examinerUpdate = () => {
-        broadcastExaminers("examiner-participants", dictee.getParticipants(false));
+        broadcastExaminers("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipants());
         broadcastExaminers("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
     };
 
@@ -156,7 +156,7 @@ io.on("connection", socket => {
         while (!contents[contents.length - 1]?.trim()) contents.pop();
 
         socket.emit("examiner-contents", title, contents.join("\n"));
-        socket.emit("examiner-participants", dictee.getParticipants(false));
+        socket.emit("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipants());
         socket.emit("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
 
         socket.on("examiner-dictee-update", (body: string) => {
@@ -238,10 +238,12 @@ app.get("/api/v1/lichtkrant", c => {
     );
 
     const payload = [];
-    for (const p of dictee.getParticipants()) {
+    const range = Object.values(dictee.getFinishedParticipants());
+
+    for (const p of range) {
         payload.push({
             name: p.firstName,
-            score: p.getCorrectAnswerCount(),
+            score: p.result?.answers.filter(a => a.correct).length,
             total: p.result?.answers.length,
             grade: p.result?.grade,
             passed: p.result?.passed

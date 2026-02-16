@@ -59,7 +59,30 @@ const participantList = document.getElementById("participant-list");
 
 const kickParticipant = (index) => socket.emit("examiner-kick", index);
 
-socket.on("examiner-participants", participants => {
+const viewResult = (e, participant) => {
+    document.getElementById("comparison-name").textContent =
+      `${participant.firstName} ${participant.lastName}`;
+
+    const givenAnswers = participant.result.answers.map(a => a.given);
+    const text = contents.textContent.replaceAll(/\{(.*?)\}/g, "{}").replaceAll("\n", "<br>");
+    let textGiven = text, textCorrect = text;
+
+    for (let i=0;; i++) {
+        const className = (participant.result.answers[i].correct) ? "green-fg" : "red-fg";
+
+        textGiven = textGiven.replace("{}", `<span class="${className}">${givenAnswers[i]}</span>`);
+        textCorrect = textCorrect.replace("{}", `<span class="green-fg">${answers[i]}</span>`);
+        if (!textGiven.includes("{}") || !textCorrect.includes("{}")) break;
+    }
+
+    document.getElementById("dictee-given").innerHTML = textGiven;
+    document.getElementById("dictee-correct").innerHTML = textCorrect;
+
+    dialog.open("inspector", e.target);
+};
+document.getElementById("inspector-close").addEventListener("click", () => dialog.close());
+
+socket.on("examiner-participants", (participants, left) => {
     [...participantList.children].forEach(c => c.remove());
 
     for (let i=0; i<participants.length; i++) {
@@ -87,9 +110,7 @@ socket.on("examiner-participants", participants => {
         viewButton.classList.add("main-bg");
         viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${participants[i].firstName}'s results">`;
         viewButton.disabled = (!participants[i].result);
-        viewButton.addEventListener("click", () => {
-            // todo: add + open dialog
-        });
+        viewButton.addEventListener("click", e => viewResult(e, participants[i]));
 
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");
@@ -98,14 +119,49 @@ socket.on("examiner-participants", participants => {
             kickButton.classList.contains("confirm-warning") ? kickParticipant(i) : kickButton.classList.add("confirm-warning");
         });
 
-        buttonWrapper.appendChild(viewButton);
         buttonWrapper.appendChild(kickButton);
+        buttonWrapper.appendChild(viewButton);
 
         const wrapper = document.createElement("p");
         wrapper.appendChild(label);
         wrapper.appendChild(buttonWrapper);
 
         participantList.appendChild(wrapper);
+    }
+
+    if (Object.keys(left).length > 0) {
+        const participatingSocketIDs = participants.filter(p => p).map(p => p.socketID);
+
+        if (participatingSocketIDs.length > 0 &&
+          Object.keys(left).filter(l => participatingSocketIDs.includes(l)).length === 0) {
+            participantList.appendChild(document.createElement("hr"));
+        }
+
+        for (const i of Object.keys(left)) {
+            if (participatingSocketIDs.includes(i)) continue;
+
+            const statusText = document.createElement("span");
+            const correctCount = left[i].result.answers.filter(a => a.correct).length;
+
+            statusText.className = (left[i].result.passed) ? "green-fg" : "red-fg";
+            statusText.textContent =
+              `${correctCount}/${left[i].result.answers.length} = ${left[i].result.grade}`;
+
+            const label = document.createElement("b");
+            label.innerHTML = `${left[i].firstName} ${left[i].lastName}<br>`;
+            label.innerHTML += statusText.outerHTML;
+
+            const viewButton = document.createElement("button");
+            viewButton.classList.add("main-bg");
+            viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${left[i].firstName}'s results">`;
+            viewButton.addEventListener("click", e => viewResult(e, left[i]));
+
+            const wrapper = document.createElement("p");
+            wrapper.appendChild(label);
+            wrapper.appendChild(viewButton);
+
+            participantList.appendChild(wrapper);
+        }
     }
 
     document.getElementById("no-participants").style.display =
@@ -137,6 +193,11 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
 
         toClosed.style.display = toBusy.style.display = "none";
         toOpen.style.display = "flex";
+
+        if (dialog.current.id) {
+            sonner.show("Het dictee is zojuist afgesloten.", "alert-circle", "red-bg");
+            dialog.close(document.body);
+        }
     } else if (state === "open" && participantsIn) {
         title.disabled = contents.disabled = saveButton.disabled = true;
         statusText.textContent = "Sluit het dictee af om het te kunnen bewerken.";
@@ -166,6 +227,10 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
     lichtkrantAPIon.style.display = lichtkrantAPI ? "flex" : "";
     lichtkrantAPIoff.style.display = lichtkrantAPI ? "" : "flex";
     lichtkrantAPIoff.disabled = (state !== "busy");
+});
+// key event handler
+addEventListener("keydown", e => {
+    if (e.key === "Escape" && dialog.current.id) dialog.close();
 });
 
 // socket disconnect action, no self-made event
