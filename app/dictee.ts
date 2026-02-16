@@ -1,4 +1,5 @@
 import { join } from "path";
+import { writeFile } from "fs";
 
 export type State = "closed" | "open" | "busy";
 
@@ -84,10 +85,12 @@ export class Dictee {
         return this.#state;
     }
     setState(to: State) {
-        if (to === "closed") {
+        if (to === "closed") writeFile(paths.resultsFile, "{}", err => {
+            if (err) throw err;
+
             this.lichtkrantAPI = false;
             for (let i=0; i<this.#participants.length; i++) this.remove(i);
-        }
+        });
 
         this.#state = to;
     }
