@@ -1,6 +1,8 @@
 {
   "name": "dictee",
-  "module": "index.ts",
+  "description": "Project to test the spelling capabilities of members of DJO",
+  "version": "2.0.0",
+  "module": "app/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
