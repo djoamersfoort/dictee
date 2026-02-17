@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "f
 
 import { isExaminer } from "./is-examiner";
 import { Dictee, paths, type State } from "./dictee";
+import { version } from "../package.json" with {type: "json"};
 
 
 // `data` directory existence check
@@ -63,6 +64,7 @@ io.bind(engine);
 io.on("connection", socket => {
     const auth = socket.client.request.headers.authorization;
     socket.emit("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+    socket.emit("dictee-version", version);
 
     socket.on("participate", (firstName: string, lastName: string) => {
         if (!firstName || !lastName) {

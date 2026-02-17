@@ -4,6 +4,9 @@ const socket = io();
 
 const answers = [];
 
+// Display version
+socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
+
 // Contents
 const title = document.getElementById("dictee-title");
 const contents = document.getElementById("dictee-contents");

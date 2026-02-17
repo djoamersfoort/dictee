@@ -131,6 +131,7 @@ document.getElementById("view-results").addEventListener("click", () => {
 });
 
 // Socket.IO events
+socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
 socket.on("dictee-state", (state, waiting, full) => {
     const waitingFormulation = (waiting === 1) ? `Er is ${waiting} kandidaat` : `Er zijn ${waiting} kandidaten`;
     const fullFormulation = (full) ? ", daarmee zit het vol." : ".";
