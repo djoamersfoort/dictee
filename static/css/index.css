@@ -98,7 +98,7 @@ body::backdrop {
     &.Home {
         grid-template-areas:
           "Heading Heading Heading"
-          "Participate Participate How"
+          "Status Status How"
           "Why Experiences Experiences"
           "Footer Footer Footer";
         grid-template-rows: 0fr auto auto 0fr;
@@ -223,20 +223,38 @@ a {
 .card {
     background-color: var(--grid-card);
     border-radius: var(--spacing);
-    &.Participate {
-        grid-area: Participate;
+    &.Status {
+        grid-area: Status;
         animation-delay: 0.2s;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
 
-        div {
-            flex-basis: 60%;
+        #status-cards {
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            gap: 3rem;
+            flex: auto;
+            gap: var(--spacing);
+            margin-bottom: 0;
+
+            div {
+                width: stretch;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+
+                background-color: var(--grid-card);
+                padding: var(--spacing) 0;
+                border-radius: var(--spacing);
+
+                h2 {
+                    margin: 0;
+                }
+                img {
+                    width: 80px;
+                }
+            }
         }
     }
     &.How {

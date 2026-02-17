@@ -21,7 +21,8 @@ import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 const socket = io();
 
 const participateButton = document.getElementById("participate");
-const participateLabel = document.getElementById("participation-state");
+const participateStatus = document.getElementById("participation-state");
+const participateUserCount = document.getElementById("participation-user-count");
 
 const setParticipating = (to) => {
     document.querySelector(".Home").style.display = (to) ? "none" : "grid";
@@ -150,19 +151,18 @@ document.getElementById("view-results").addEventListener("click", () => {
 
 // Socket.IO events
 socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
-socket.on("dictee-state", (state, waiting, full) => {
-    const waitingFormulation = (waiting === 1) ? `Er is ${waiting} kandidaat` : `Er zijn ${waiting} kandidaten`;
-    const fullFormulation = (full) ? ", daarmee zit het vol." : ".";
+socket.on("dictee-state", (state, waiting, max) => {
+    const full = (waiting === max);
 
-    const buttonText = (state === "closed")
-      ? `Op dit moment is er <span class="red-fg">geen</span> dictee beschikbaar.`
-      : (state === "open")
-      ? `Op dit moment is er een dictee <span class="green-fg">beschikbaar</span>.
-         <br>${waitingFormulation} aan het wachten${fullFormulation}`
-      : `Op dit moment is het dictee <span class="red-fg">bezig</span>.`;
+    const buttonText = (state === "closed") ? "Niet beschikbaar" :
+      (state === "open" && full) ? "Vol" :
+      (state === "open") ? "Beschikbaar" : "Bezig";
 
-    participateLabel.innerHTML = buttonText;
+    participateStatus.textContent = buttonText;
+    participateUserCount.textContent = (state === "closed") ? "— / —" : `${waiting} / ${max}`;
+
     participateButton.disabled = (state !== "open" || full);
+    participateStatus.className = (participateButton.disabled) ? "red-fg" : "green-fg";
 });
 
 socket.on("participate-reply", (err, pid) => {
@@ -236,6 +236,6 @@ socket.on("disconnect", () => {
     if (dialog.current.element) dialog.close();
     if (isParticipating()) setParticipating(false);
 
-    participateLabel.innerHTML = `De server is <span class="red-fg">offline</span>.`
+    participateStatus.innerHTML = `De server is <span class="red-fg">offline</span>.`
     participateButton.disabled = true;
 });

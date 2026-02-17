@@ -81,7 +81,7 @@ const broadcastExaminers = (event: string, ...args: any) => {
 io.bind(engine);
 io.on("connection", socket => {
     const auth = socket.client.request.headers.authorization;
-    socket.emit("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+    socket.emit("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
     socket.emit("dictee-version", version);
 
     socket.on("participate", (firstName: string, lastName: string) => {
@@ -104,7 +104,7 @@ io.on("connection", socket => {
 
         socket.emit("participate-reply", null, dictee.add(firstName, lastName, socket.id));
 
-        broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+        broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
         examinerUpdate();
     });
 
@@ -154,7 +154,7 @@ io.on("connection", socket => {
     socket.conn.on("close", () => {
         if (dictee.getParticipantBySocketID(socket.id)) {
             dictee.remove(dictee.getParticipantIndexBySocketID(socket.id));
-            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
         }
 
         if (examinerSocketIDs.indexOf(socket.id) > -1)
@@ -201,14 +201,14 @@ io.on("connection", socket => {
             io.fetchSockets().then(sockets => {
                 sockets.filter(s => s.id === kickedSocketID)[0]?.emit("force-quit", kickMessage);
             });
-            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
             examinerUpdate();
         });
 
         socket.on("examiner-set-state", (to: State) => {
             dictee.setState(to);
 
-            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), dictee.isFull());
+            broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
             examinerUpdate();
 
             if (to === "closed") {
