@@ -31,9 +31,9 @@ const contents = document.getElementById("dictee-contents");
 const saveButton = document.getElementById("dictee-save");
 const statusText = document.getElementById("dictee-contents-status");
 
-saveButton.addEventListener("click", () => {
-    socket.emit("examiner-dictee-update", `${title.value}\n${contents.value}`);
-});
+const dicteeUpdate = () => socket.emit("examiner-dictee-update", `${title.value}\n${contents.value}`);
+
+saveButton.addEventListener("click", dicteeUpdate);
 
 const validateContentsInput = (e) => {
     const openWords = e.target.value.match(/\{(\S+)\}/g);
@@ -254,6 +254,10 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
 // key event handler
 addEventListener("keydown", e => {
     if (e.key === "Escape" && dialog.current.id) dialog.close();
+    else if (e.ctrlKey && e.key === "s" && !saveButton.disabled) {
+        e.preventDefault();
+        dicteeUpdate();
+    }
 });
 
 // socket disconnect action, no self-made event
