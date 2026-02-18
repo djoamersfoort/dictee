@@ -22,12 +22,12 @@ import { readFileSync, writeFile } from "fs";
 export type State = "closed" | "open" | "busy";
 
 export type ResultsFile = {
-    [key: string]: {
+    [key: string]: { // Socket.IO `id`
         firstName: string,
         lastName: string,
         result: {
             answers: {given: string, correct: boolean}[],
-            grade: string,
+            grade: string, // Number.toFixed(1)
             passed: boolean
         }
     }
@@ -39,7 +39,7 @@ class Participant {
     socketID: string;
     result: {
         answers: {given: string, correct: boolean}[],
-        grade: string, // toFixed(1) string
+        grade: string, // Number.toFixed(1)
         passed: boolean
     } | undefined;
 
@@ -49,16 +49,19 @@ class Participant {
         this.socketID = socketID;
     }
 
-    getFullName() {
-        return `${this.firstName} ${this.lastName}`;
-    }
-
+    /**
+     * Get the amount of correct answers given by the participant.
+     * @returns 0 if not finished yet
+     */
     getCorrectAnswerCount() {
         if (!this.result) return 0;
 
         return this.result.answers.filter(a => a.correct).length;
     }
 
+    /**
+     * Compare the given answers of the participant to the correct ones and store them.
+     */
     check(givenAnswers: string[], correctAnswers: string[]) {
         if (this.result || givenAnswers.length !== correctAnswers.length) return;
 
@@ -68,7 +71,10 @@ class Participant {
             const correct = (answer === correctAnswers[i]);
 
             // XSS prevention
-            const given = answer.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+            const given = answer
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;");
             this.result?.answers.push({given, correct});
         });
 
@@ -97,6 +103,10 @@ export class Dictee {
         this.lichtkrantAPI = false;
     }
 
+    /**
+     * Add a new participant to the dictee.
+     * @returns the participant ID, used by examiners to identify the actual person who joined.
+     */
     add(firstName: string, lastName: string, socketID: string) {
         let i;
         for (i=0; i<Dictee.maxParticipants; i++) {
@@ -107,16 +117,29 @@ export class Dictee {
         }
         return i;
     }
+    /**
+     * Remove a participant from the dictee.
+     */
     remove(index: number) {
         delete this.#participants[index];
     }
+    /**
+     * Check whether the dictee reached `Dictee.maxParticipants` participants.
+     */
     isFull() {
         return this.getParticipantCount() === Dictee.maxParticipants;
     }
 
+    /**
+     * Get the current dictee state.
+     * @returns `"closed"` if not available, `"open"` if participants can join and `"busy"` if the dictee has started.
+     */
     getState() {
         return this.#state;
     }
+    /**
+     * Update the dictee state.
+     */
     setState(to: State) {
         if (to === "closed") writeFile(paths.resultsFile, "{}", err => {
             if (err) throw err;
@@ -128,22 +151,39 @@ export class Dictee {
         this.#state = to;
     }
 
+    /**
+     * Get the array of participants.
+     * @param filtered Whether the empty participant slots should be removed from the returned array.
+     */
     getParticipants(filtered: boolean = true) {
         return filtered ? this.#participants.filter(p => p) : this.#participants;
     }
+    /**
+     * Get the amount of participants who are currently waiting or busy.
+     */
     getParticipantCount() {
         return this.getParticipants().length;
     }
+    /**
+     * Get a participant **index** based on their Socket.IO `id`.
+     */
     getParticipantIndexBySocketID(socketID: string) {
         const participant = this.#participants.filter(p => p && p.socketID === socketID)[0];
 
         return participant ? this.#participants.indexOf(participant) : -1;
     }
+    /**
+     * Get a participant based on their Socket.IO `id`.
+     */
     getParticipantBySocketID(socketID: string) {
         return this.#participants[this.getParticipantIndexBySocketID(socketID)];
     }
 
-    getFinishedParticipants(): ResultsFile {
+    /**
+     * Get all the data of participants who already finished the dictee.
+     * @returns the contents from `paths.resultsFile`.
+     */
+    getFinishedParticipantData(): ResultsFile {
         return JSON.parse(
             new TextDecoder().decode(readFileSync(paths.resultsFile))
         );

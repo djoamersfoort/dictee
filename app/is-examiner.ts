@@ -21,6 +21,10 @@ import { readFile } from "fs";
 import { paths } from "./dictee";
 
 
+/**
+ * Check whether a user has authenticated themselves as an examiner, regardless of their `location.pathname`.
+ * @param base64auth The value from the `Authorization` header. The `Basic` prefix is optional.
+ */
 export const isExaminer = async (base64auth: string | undefined) => {
     return new Promise((res, rej) => {
         readFile(paths.examinersFile, (err, txt) => {

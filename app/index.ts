@@ -33,6 +33,7 @@ import { version } from "../package.json" with {type: "json"};
 if (!existsSync(join(import.meta.dirname, "..", "data")))
     mkdirSync(join(import.meta.dirname, "..", "data"));
 
+// file existence check
 for (const i of [paths.contentsFile, paths.resultsFile, paths.examinersFile]) {
     if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
 }
@@ -50,12 +51,18 @@ const formInput = /\{(.*?)\}/g;
 // Socket.IO
 const examinerSocketIDs: string[] = [];
 
+/**
+ * Broadcast a message to **all** clients connected to the dictee site.
+ */
 const broadcast = (event: string, ...args: any) => {
     io.fetchSockets().then(sockets => {
         sockets.forEach(s => s.emit(event, ...args));
     }).catch(() => {});
 };
 
+/**
+ * Broadcast a message to all clients waiting for or participating in a dictee.
+ */
 const broadcastParticipants = (event: string, ...args: any) => {
     const participantSocketIDs = dictee.getParticipants().map(p => p?.socketID);
     io.fetchSockets().then(sockets => {
@@ -63,6 +70,9 @@ const broadcastParticipants = (event: string, ...args: any) => {
     });
 };
 
+/**
+ * Broadcast a message to all clients _not_ waiting for or participating in a dictee.
+ */
 const broadcastNonParticipants = (event: string, ...args: any) => {
     const participantSocketIDs = dictee.getParticipants().map(p => p?.socketID);
     io.fetchSockets().then(sockets => {
@@ -70,6 +80,9 @@ const broadcastNonParticipants = (event: string, ...args: any) => {
     });
 };
 
+/**
+ * Broadcast a message to all clients who have authorized themselves as examiner.
+ */
 const broadcastExaminers = (event: string, ...args: any) => {
     io.fetchSockets().then(sockets => {
         sockets.forEach(s => {
@@ -84,6 +97,7 @@ io.on("connection", socket => {
     socket.emit("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
     socket.emit("dictee-version", version);
 
+    // first/last name validations
     socket.on("participate", (firstName: string, lastName: string) => {
         if (!firstName || !lastName) {
             socket.emit("participate-reply", "Niet alle velden zijn ingevuld!");
@@ -116,9 +130,11 @@ io.on("connection", socket => {
     });
 
     socket.on("submit-answers", (answers: string[]) => {
+        // find participant based on socket ID
         const sender = dictee.getParticipantBySocketID(socket.id);
         if (!sender) return;
 
+        // get answer keys and filter the curly braces out
         const fetchedAnswerKeys = new TextDecoder().decode(
             readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))
         ).match(formInput) as string[];
@@ -126,9 +142,11 @@ io.on("connection", socket => {
         const answerKeys: string[] = [];
         for (const a of fetchedAnswerKeys) answerKeys.push(a.replaceAll(/(\{|\})/g, ""));
 
+        // check their answers and update examiner pages
         sender.check(answers, answerKeys);
         examinerUpdate();
 
+        // write to results file and send result data to sender
         const results: ResultsFile = JSON.parse(new TextDecoder().decode(
             readFileSync(paths.resultsFile)
         ));
@@ -152,22 +170,28 @@ io.on("connection", socket => {
     });
 
     socket.conn.on("close", () => {
+        // if participant, remove from participant list
         if (dictee.getParticipantBySocketID(socket.id)) {
             dictee.remove(dictee.getParticipantIndexBySocketID(socket.id));
             broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
         }
 
+        // if examiner, remove from authorized socket IDs
         if (examinerSocketIDs.indexOf(socket.id) > -1)
             examinerSocketIDs.splice(examinerSocketIDs.indexOf(socket.id), 1);
 
         examinerUpdate();
     });
 
+    /**
+     * Refresh the examiner webpage, useful to call after a change in the `Dictee` class.
+     */
     const examinerUpdate = () => {
-        broadcastExaminers("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipants());
+        broadcastExaminers("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipantData());
         broadcastExaminers("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
     };
 
+    // examiner only socket events
     isExaminer(auth).then(() => {
         if (!examinerSocketIDs.includes(socket.id)) examinerSocketIDs.push(socket.id);
 
@@ -176,7 +200,7 @@ io.on("connection", socket => {
         while (!contents[contents.length - 1]?.trim()) contents.pop();
 
         socket.emit("examiner-contents", title, contents.join("\n"));
-        socket.emit("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipants());
+        socket.emit("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipantData());
         socket.emit("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
 
         socket.on("examiner-dictee-update", (body: string) => {
@@ -253,13 +277,15 @@ app.get("/examinator", async c => {
 app.use("/static/*", serveStatic({root: join(import.meta.dirname, "..")}));
 
 app.get("/api/v1/lichtkrant", c => {
+    // return empty array if not enabled
     if (!dictee.lichtkrantAPI) return c.text(
         "[]", 200, {"Content-Type": "application/json"}
     );
 
     const payload = [];
-    const range = Object.values(dictee.getFinishedParticipants());
+    const range = Object.values(dictee.getFinishedParticipantData());
 
+    // collect data for API and send that
     for (const p of range) {
         payload.push({
             name: p.firstName,
