@@ -162,7 +162,8 @@ socket.on("dictee-state", (state, waiting, max) => {
     participateUserCount.textContent = (state === "closed") ? "— / —" : `${waiting} / ${max}`;
 
     participateButton.disabled = (state !== "open" || full);
-    participateStatus.className = (participateButton.disabled) ? "red-fg" : "green-fg";
+    participateStatus.className = (full || state === "busy") ? "orange-fg" :
+      (state === "closed") ? "red-fg" : "green-fg";
 });
 
 socket.on("participate-reply", (err, pid) => {

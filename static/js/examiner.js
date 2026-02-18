@@ -89,7 +89,8 @@ const viewResult = (e, participant) => {
     let textGiven = text, textCorrect = text;
 
     for (let i=0;; i++) {
-        const className = (participant.result.answers[i].correct) ? "green-fg" : "red-fg";
+        const className = (participant.result.answers[i].correct && givenAnswers[i] === answers[i]) ? "green-fg" :
+          (participant.result.answers[i].correct || givenAnswers[i] === answers[i]) ? "orange-fg" : "red-fg";
 
         textGiven = textGiven.replace("{}", `<span class="${className}">${givenAnswers[i]}</span>`);
         textCorrect = textCorrect.replace("{}", `<span class="green-fg">${answers[i]}</span>`);

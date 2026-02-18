@@ -30,7 +30,7 @@
         linear-gradient(135deg, rgb(190, 0, 30), rgb(130, 0, 0));
     --red-gradient-fg:
         radial-gradient(at 45% 80%, salmon, rgba(30, 0, 0, 0)),
-        linear-gradient(135deg, rgb(210, 130, 110), rgb(160, 80, 80));
+        linear-gradient(135deg, rgb(250, 90, 70), rgb(255, 100, 100));
 
     --green-gradient-bg:
         radial-gradient(at 75% 40%, rgb(30, 230, 30), rgba(0, 30, 0, 0)),
@@ -38,6 +38,10 @@
     --green-gradient-fg:
         radial-gradient(at 75% 40%, lightgreen, rgba(0, 30, 0, 0)),
         linear-gradient(135deg, rgb(50, 230, 80), rgb(0, 130, 70));
+
+    --orange-gradient-fg:
+        radial-gradient(at 65% 80%, orange, rgba(60, 30, 0, 0)),
+        linear-gradient(135deg, rgb(230, 130, 20), rgb(230, 155, 45));
 
     --main-color: #fff;
     --gray-color: #bbb;
@@ -216,7 +220,7 @@ a {
         width: 18px;
         height: 18px;
         margin-left: 2px;
-        vertical-align: text-top;
+        vertical-align: text-bottom;
     }
 }
 
@@ -564,6 +568,11 @@ button.main-bg {
 }
 .green-bg {
     background: linear-gradient(1deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), var(--green-gradient-bg);
+}
+.orange-fg {
+    color: transparent;
+    background: var(--orange-gradient-fg);
+    background-clip: text;
 }
 
 #overlay {
