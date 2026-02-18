@@ -202,6 +202,7 @@ socket.on("dictee-start", txt => {
         html = html.replace("{}", `<input id="dictee-answer-${i}" spellcheck="false" autocomplete="off">`);
     }
 
+    document.getElementById("dictee-submit").classList.remove("return-to-main");
     document.getElementById("dictee-form-header").textContent = "Succes!";
     document.getElementById("dictee-form-title").textContent = title;
     document.getElementById("dictee-form-contents").innerHTML = html;
