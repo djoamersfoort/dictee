@@ -193,7 +193,7 @@ socket.on("force-quit", (reason) => {
 });
 
 socket.on("dictee-start", txt => {
-    const contents = txt.split("\n");
+    const contents = htmlsp(txt).split("\n");
     const title = contents.shift();
     let html = contents.join("\n").replaceAll("\n", "<br>");
 

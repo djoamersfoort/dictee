@@ -16,6 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// htmlspecialchars: XSS prevention
+const htmlsp = input => input
+  .replaceAll("&", "&amp;")
+  .replaceAll(`"`, "&quot;")
+  .replaceAll("'", "&apos;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;");
+
 const shortDisableOverflow = () => {
     document.body.style.overflowY = "hidden";
     setTimeout(() => document.body.style.overflowY = "", 3000);

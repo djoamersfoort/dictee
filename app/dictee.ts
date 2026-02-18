@@ -67,14 +67,8 @@ class Participant {
 
         this.result = {answers: [], grade: "1.0", passed: false};
 
-        givenAnswers.forEach((answer, i) => {
-            const correct = (answer === correctAnswers[i]);
-
-            // XSS prevention
-            const given = answer
-              .replaceAll("&", "&amp;")
-              .replaceAll("<", "&lt;")
-              .replaceAll(">", "&gt;");
+        givenAnswers.forEach((given, i) => {
+            const correct = (given === correctAnswers[i]);
             this.result?.answers.push({given, correct});
         });
 

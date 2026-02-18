@@ -85,15 +85,15 @@ const viewResult = (e, participant) => {
       `${participant.firstName} ${participant.lastName}`;
 
     const givenAnswers = participant.result.answers.map(a => a.given);
-    const text = contents.textContent.replaceAll(/\{(.*?)\}/g, "{}").replaceAll("\n", "<br>");
+    const text = htmlsp(contents.textContent).replaceAll(/\{(.*?)\}/g, "{}").replaceAll("\n", "<br>");
     let textGiven = text, textCorrect = text;
 
     for (let i=0;; i++) {
         const className = (participant.result.answers[i].correct && givenAnswers[i] === answers[i]) ? "green-fg" :
           (participant.result.answers[i].correct || givenAnswers[i] === answers[i]) ? "orange-fg" : "red-fg";
 
-        textGiven = textGiven.replace("{}", `<span class="${className}">${givenAnswers[i]}</span>`);
-        textCorrect = textCorrect.replace("{}", `<span class="green-fg">${answers[i]}</span>`);
+        textGiven = textGiven.replace("{}", `<span class="${className}">${htmlsp(givenAnswers[i])}</span>`);
+        textCorrect = textCorrect.replace("{}", `<span class="green-fg">${htmlsp(answers[i])}</span>`);
         if (!textGiven.includes("{}") || !textCorrect.includes("{}")) break;
     }
 
@@ -122,7 +122,7 @@ socket.on("examiner-participants", (participants, left) => {
         }
 
         const label = document.createElement("b");
-        label.innerHTML = `${participants[i].firstName} ${participants[i].lastName} <em>#${i + 1}</em><br>`;
+        label.innerHTML = htmlsp(`${participants[i].firstName} ${participants[i].lastName}`) + `<em>#${i + 1}</em><br>`;
         label.innerHTML += statusText.outerHTML;
 
         const buttonWrapper = document.createElement("div");
@@ -130,13 +130,13 @@ socket.on("examiner-participants", (participants, left) => {
 
         const viewButton = document.createElement("button");
         viewButton.classList.add("main-bg");
-        viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${participants[i].firstName}'s results">`;
+        viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${htmlsp(participants[i].firstName)}'s results">`;
         viewButton.disabled = (!participants[i].result);
         viewButton.addEventListener("click", e => viewResult(e, participants[i]));
 
         const kickButton = document.createElement("button");
         kickButton.classList.add("red-bg");
-        kickButton.innerHTML = `<img src="/static/icons/user-x.svg" alt="Kick ${participants[i].firstName}">`;
+        kickButton.innerHTML = `<img src="/static/icons/user-x.svg" alt="Kick ${htmlsp(participants[i].firstName)}">`;
         kickButton.addEventListener("click", () => {
             kickButton.classList.contains("confirm-warning") ? kickParticipant(i) : kickButton.classList.add("confirm-warning");
         });
@@ -170,12 +170,12 @@ socket.on("examiner-participants", (participants, left) => {
               `${correctCount}/${left[i].result.answers.length} = <strong>${left[i].result.grade}</strong>`;
 
             const label = document.createElement("b");
-            label.innerHTML = `${left[i].firstName} ${left[i].lastName}<br>`;
+            label.innerHTML = htmlsp(`${left[i].firstName} ${left[i].lastName}`) + "<br>";
             label.innerHTML += statusText.outerHTML;
 
             const viewButton = document.createElement("button");
             viewButton.classList.add("main-bg");
-            viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${left[i].firstName}'s results">`;
+            viewButton.innerHTML = `<img src="/static/icons/eye.svg" alt="${htmlsp(left[i].firstName)}'s results">`;
             viewButton.addEventListener("click", e => viewResult(e, left[i]));
 
             const wrapper = document.createElement("p");
