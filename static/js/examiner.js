@@ -77,6 +77,7 @@ socket.on("examiner-dictee-update-reply", (err) => {
 
 // Participants
 const participantList = document.getElementById("participant-list");
+const noParticipants = document.getElementById("no-participants");
 
 const kickParticipant = (index) => socket.emit("examiner-kick", index);
 
@@ -186,8 +187,7 @@ socket.on("examiner-participants", (participants, left) => {
         }
     }
 
-    document.getElementById("no-participants").style.display =
-      (participantList.children.length > 0) ? "none" : "";
+    noParticipants.style.display = (participantList.children.length > 0) ? "none" : "";
 });
 
 // Status
@@ -251,7 +251,18 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
     lichtkrantAPIoff.disabled = (state !== "busy");
 });
 
-// key event handler
+// event handlers
+const resizeNecessaryElements = () => {
+    participantList.style.maxHeight =
+      `${participantList.parentElement.clientHeight - 90}px`;
+
+    noParticipants.style.marginTop =
+      `${(noParticipants.parentElement.clientHeight - noParticipants.clientHeight - 125) / 2}px`;
+};
+
+addEventListener("load", resizeNecessaryElements);
+addEventListener("resize", resizeNecessaryElements);
+
 addEventListener("keydown", e => {
     if (e.key === "Escape" && dialog.current.id) dialog.close();
     else if (e.ctrlKey && e.key === "s" && !saveButton.disabled) {

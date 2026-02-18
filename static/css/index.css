@@ -320,6 +320,7 @@ a {
             flex-direction: column;
             background-color: var(--grid-card);
             border-radius: var(--spacing);
+            overflow-y: auto;
 
             p {
                 display: flex;
