@@ -115,8 +115,8 @@ socket.on("examiner-participants", (participants, left) => {
             const correctCount = participants[i].result.answers.filter(a => a.correct).length;
 
             statusText.className = (participants[i].result.passed) ? "green-fg" : "red-fg";
-            statusText.textContent =
-              `${correctCount}/${participants[i].result.answers.length} = ${participants[i].result.grade}`;
+            statusText.innerHTML =
+              `${correctCount}/${participants[i].result.answers.length} = <strong>${participants[i].result.grade}</strong>`;
         } else {
             statusText.textContent = "Nog niet klaar";
         }
@@ -166,8 +166,8 @@ socket.on("examiner-participants", (participants, left) => {
             const correctCount = left[i].result.answers.filter(a => a.correct).length;
 
             statusText.className = (left[i].result.passed) ? "green-fg" : "red-fg";
-            statusText.textContent =
-              `${correctCount}/${left[i].result.answers.length} = ${left[i].result.grade}`;
+            statusText.innerHTML =
+              `${correctCount}/${left[i].result.answers.length} = <strong>${left[i].result.grade}</strong>`;
 
             const label = document.createElement("b");
             label.innerHTML = `${left[i].firstName} ${left[i].lastName}<br>`;
