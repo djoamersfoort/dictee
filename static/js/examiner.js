@@ -36,11 +36,11 @@ saveButton.addEventListener("click", () => {
 });
 
 const validateContentsInput = (e) => {
-    const openWords = e.target.value.match(/\{(.+?)\}/g);
+    const openWords = e.target.value.match(/\{(\S+)\}/g);
     const openWordCount = (openWords) ? openWords.length : 0;
     const curlyBracesOpen = e.target.value.match(/\{/g) ? e.target.value.match(/\{/g).length : 0;
     const curlyBracesClose = e.target.value.match(/\}/g) ? e.target.value.match(/\}/g).length : 0;
-    const curlyBracesNothingBetween = /\{\}/g.test(e.target.value);
+    const curlyBracesNothingBetween = /\{\s*\}/g.test(e.target.value);
 
     let valid = true;
     let output = `De kandidaten moeten in dit dictee ${openWordCount} ${(openWordCount === 1) ? "antwoord":"antwoorden"} geven`;
@@ -250,6 +250,7 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
     lichtkrantAPIoff.style.display = lichtkrantAPI ? "" : "flex";
     lichtkrantAPIoff.disabled = (state !== "busy");
 });
+
 // key event handler
 addEventListener("keydown", e => {
     if (e.key === "Escape" && dialog.current.id) dialog.close();
@@ -257,5 +258,7 @@ addEventListener("keydown", e => {
 
 // socket disconnect action, no self-made event
 socket.on("disconnect", () => {
+    if (dialog.current.id) dialog.close();
+
     sonner.show("De server is ermee gekapt!", null, "red-bg");
 });

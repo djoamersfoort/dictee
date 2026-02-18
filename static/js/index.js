@@ -44,7 +44,10 @@ participateButton.addEventListener("click", () => dialog.open("rules", participa
 
 document.getElementById("rules-close").addEventListener("click", () => dialog.close());
 document.getElementById("rules-disagree").addEventListener("click", () => dialog.close());
-document.getElementById("rules-agree").addEventListener("click", () => dialog.switch("name-inputs"));
+document.getElementById("rules-agree").addEventListener("click", () => {
+    document.getElementById("name-error").textContent = "";
+    dialog.switch("name-inputs");
+});
 document.getElementById("names-back").addEventListener("click", () => dialog.switch("rules"));
 document.getElementById("names-confirm").addEventListener("click", () => {
     socket.emit("participate",
@@ -171,11 +174,11 @@ socket.on("participate-reply", (err, pid) => {
         document.getElementById("name-error").textContent = err;
         return;
     }
-    const participantID = isNaN(pid) ? "---" : +pid + 1;
+    const participantID = isNaN(pid) ? "---" : `#${+pid + 1}`;
 
     document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message));
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
-    document.getElementById("participant-id").textContent = `#${participantID}`;
+    document.getElementById("participant-id").textContent = participantID;
     dialog.switch("waiting-room");
 });
 
@@ -237,6 +240,7 @@ socket.on("disconnect", () => {
     if (dialog.current.element) dialog.close();
     if (isParticipating()) setParticipating(false);
 
-    participateStatus.innerHTML = `De server is <span class="red-fg">offline</span>.`
+    participateStatus.textContent = "Offline";
+    participateStatus.className = "red-fg";
     participateButton.disabled = true;
 });

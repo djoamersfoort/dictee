@@ -25,7 +25,7 @@ import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "fs";
 
 import { isExaminer } from "./is-examiner";
-import { Dictee, paths, type State } from "./dictee";
+import { Dictee, paths, type State, type ResultsFile } from "./dictee";
 import { version } from "../package.json" with {type: "json"};
 
 
@@ -129,13 +129,13 @@ io.on("connection", socket => {
         sender.check(answers, answerKeys);
         examinerUpdate();
 
-        const results = JSON.parse(new TextDecoder().decode(
+        const results: ResultsFile = JSON.parse(new TextDecoder().decode(
             readFileSync(paths.resultsFile)
         ));
         results[sender.socketID] = {
             firstName: sender.firstName,
             lastName: sender.lastName,
-            result: sender.result
+            result: sender.result ?? {answers: [], grade: "1.0", passed: false}
         };
 
         writeFile(paths.resultsFile, JSON.stringify(results, null, 4), (err) => {

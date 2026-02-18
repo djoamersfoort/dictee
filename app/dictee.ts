@@ -21,7 +21,7 @@ import { readFileSync, writeFile } from "fs";
 
 export type State = "closed" | "open" | "busy";
 
-type ResultsFile = {
+export type ResultsFile = {
     [key: string]: {
         firstName: string,
         lastName: string,
