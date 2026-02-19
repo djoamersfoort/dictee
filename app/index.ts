@@ -35,7 +35,8 @@ if (!existsSync(join(import.meta.dirname, "..", "data")))
 
 // file existence check
 for (const i of [paths.contentsFile, paths.resultsFile, paths.examinersFile]) {
-    if (!existsSync(i)) writeFileSync(i, i.endsWith("json") ? "{}" : "");
+    const content = i.endsWith("json") ? "{}" : "Een titel\nEen {episch} dictee!";
+    if (!existsSync(i)) writeFileSync(i, content);
 }
 
 // Declarations
@@ -136,7 +137,7 @@ io.on("connection", socket => {
 
         // get answer keys and filter the curly braces out
         const fetchedAnswerKeys = new TextDecoder().decode(
-            readFileSync(join(import.meta.dirname, "..", "data", "contents.txt"))
+            readFileSync(paths.contentsFile)
         ).match(formInput) as string[];
 
         const answerKeys: string[] = [];
@@ -197,7 +198,7 @@ io.on("connection", socket => {
 
         const contents = new TextDecoder().decode(readFileSync(paths.contentsFile)).split("\n");
         const title = contents.shift();
-        while (!contents[contents.length - 1]?.trim()) contents.pop();
+        while (contents.length > 0 && contents[contents.length - 1]?.trim().length === 0) contents.pop();
 
         socket.emit("examiner-contents", title, contents.join("\n"));
         socket.emit("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipantData());
@@ -207,7 +208,7 @@ io.on("connection", socket => {
             if (dictee.getState() !== "closed") return;
 
             const lines = body.split("\n");
-            while (!lines[lines.length - 1]?.trim()) lines.pop();
+            while (lines.length > 0 && lines[lines.length - 1]?.trim().length === 0) lines.pop();
 
             writeFile(paths.contentsFile, lines.join("\n"), err => {
                 socket.emit("examiner-dictee-update-reply", err);

@@ -35,17 +35,20 @@ const dicteeUpdate = () => socket.emit("examiner-dictee-update", `${title.value}
 
 saveButton.addEventListener("click", dicteeUpdate);
 
-const validateContentsInput = (e) => {
-    const openWords = e.target.value.match(/\{(\S+)\}/g);
+const validateContentsInput = (_e) => {
+    const openWords = contents.value.match(/\{(\S+)\}/g);
     const openWordCount = (openWords) ? openWords.length : 0;
-    const curlyBracesOpen = e.target.value.match(/\{/g) ? e.target.value.match(/\{/g).length : 0;
-    const curlyBracesClose = e.target.value.match(/\}/g) ? e.target.value.match(/\}/g).length : 0;
-    const curlyBracesNothingBetween = /\{\s*\}/g.test(e.target.value);
+    const curlyBracesOpen = contents.value.match(/\{/g) ? contents.value.match(/\{/g).length : 0;
+    const curlyBracesClose = contents.value.match(/\}/g) ? contents.value.match(/\}/g).length : 0;
+    const curlyBracesNothingBetween = /\{\s*\}/g.test(contents.value);
 
     let valid = true;
     let output = `De kandidaten moeten in dit dictee ${openWordCount} ${(openWordCount === 1) ? "antwoord":"antwoorden"} geven`;
 
-    if (curlyBracesOpen != curlyBracesClose || curlyBracesNothingBetween) {
+    if (title.value.length === 0) {
+        output += ", maar er mist een titel.";
+        valid = false;
+    } else if (curlyBracesOpen != curlyBracesClose || curlyBracesNothingBetween) {
         output += ", maar je syntax is niet helemaal lekker.";
         valid = false;
     } else if (openWordCount === 0) {
@@ -57,6 +60,7 @@ const validateContentsInput = (e) => {
     saveButton.disabled = !valid;
 };
 
+title.addEventListener("input", validateContentsInput);
 contents.addEventListener("input", validateContentsInput);
 
 socket.on("examiner-contents", (t, c) => {
@@ -64,7 +68,9 @@ socket.on("examiner-contents", (t, c) => {
     contents.textContent = c;
 
     const derivedAnswers = [];
-    c.match(/\{(.+?)\}/g).forEach(a => derivedAnswers.push(a.replace(/\{|\}/g, "")));
+    if (c.match(/\{(.+?)\}/g))
+        c.match(/\{(.+?)\}/g).forEach(a => derivedAnswers.push(a.replace(/\{|\}/g, "")));
+
     answers.splice(0, answers.length, ...derivedAnswers);
 });
 

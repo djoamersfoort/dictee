@@ -178,8 +178,12 @@ export class Dictee {
      * @returns the contents from `paths.resultsFile`.
      */
     getFinishedParticipantData(): ResultsFile {
-        return JSON.parse(
-            new TextDecoder().decode(readFileSync(paths.resultsFile))
-        );
+        try {
+            return JSON.parse(
+                new TextDecoder().decode(readFileSync(paths.resultsFile))
+            );
+        } catch (err) {
+            return {};
+        }
     }
 };
