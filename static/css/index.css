@@ -774,3 +774,9 @@ noscript .dialog {
         border-radius: inherit;
     }
 }
+.cheat-details {
+    color: salmon;
+    & div {
+        padding-left: 20px;
+    }
+}
