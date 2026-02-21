@@ -191,7 +191,7 @@ socket.on("participate-reply", (err, pid) => {
     });
     let switchTime = 0;
     let switchTimeInterval;
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             socket.emit("tab-switched");
             switchTime = 0;
