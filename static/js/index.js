@@ -177,7 +177,37 @@ socket.on("participate-reply", (err, pid) => {
     }
     const participantID = isNaN(pid) ? "---" : `#${+pid + 1}`;
 
-    document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message));
+    document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message)).then(() => {
+        let hasResized = false;
+        let fsLeft = false;
+        window.addEventListener("resize", () => {
+            if (hasResized && !fsLeft) {
+                socket.emit("fullscreen-closed");
+                sonner.show("Je hebt fullscreen verlaten. Dit is ook verstuurd naar de examinator.", null, "red-bg");
+                fsLeft = true;
+            }
+            hasResized = true;
+        });
+    });
+    let switchTime = 0;
+    let switchTimeInterval;
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            socket.emit("tab-switched");
+            switchTime = 0;
+            switchTimeInterval = setInterval(() => {
+                switchTime++;
+            }, 1000);
+        }else {
+            clearInterval(switchTimeInterval);
+            socket.emit("tab-switched-back", switchTime);
+            sonner.show(
+                "Je bent naar een ander browsertabblad gegaan. Dit is ook verstuurd naar de examinator.",
+                null,
+                "red-bg"
+            );
+        }
+    });
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
     document.getElementById("participant-id").textContent = participantID;
     dialog.switch("waiting-room");

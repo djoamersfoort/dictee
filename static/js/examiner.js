@@ -283,3 +283,35 @@ socket.on("disconnect", () => {
 
     sonner.show("De server is ermee gekapt!", null, "red-bg");
 });
+
+socket.on("participant-cheat", (firstName, lastName, pid, method, meta) => {
+    if (method !== "tab-back") sonner.show(`${firstName} ${lastName} (#${pid + 1}) cheated.`, null, "red-bg");
+    console.log(method, meta);
+    for (const child of participantList.children) {
+        if (child.querySelector("em").innerText.includes((pid + 1).toString())) {
+            child.classList.add("red-fg");
+            let cheatDetails = child.querySelector(".cheat-details");
+            if (!cheatDetails) {
+                cheatDetails = document.createElement("details");
+                cheatDetails.classList.add("cheat-details");
+                const summary = document.createElement("summary");
+                summary.innerText = "Valsspeel details";
+                cheatDetails.appendChild(summary);
+                const properties = child.querySelector("b");
+                properties.appendChild(document.createElement("br"));
+                properties.appendChild(cheatDetails);
+            }
+            const cheatStatusWrapper = document.createElement("div");
+            const cheatStatus = document.createElement("span");
+            cheatStatus.innerText =
+                method === "fullscreen"?
+                    "Heeft fullscreen verlaten." :
+                    method === "tab"?
+                        "Is naar een ander browsertabblad gegaan" :
+                        method === "tab-back"?
+                            `Is teruggegaan na ${meta} seconden.` : `Valsgespeeld met onbekende methode: "${method}".`;
+            cheatStatusWrapper.appendChild(cheatStatus);
+            cheatDetails.appendChild(cheatStatusWrapper);
+        }
+    }
+});
