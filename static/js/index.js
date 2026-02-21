@@ -156,12 +156,7 @@ document.getElementById("view-results").addEventListener("click", () => {
 socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
 socket.on("dictee-state", (state, waiting, max) => {
     const full = (waiting === max);
-
-    if (state === "open" && !full) {
-        document.getElementById("waitAvailable").style.display = "none";
-    }else {
-        document.getElementById("waitAvailable").style.display = "";
-    }
+    document.getElementById("wait-available").style.display = state === "open" && !full ? "none" : "";
 
     const buttonText = (state === "closed") ? "Niet beschikbaar" :
       (state === "open" && full) ? "Vol" :
