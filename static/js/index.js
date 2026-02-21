@@ -183,7 +183,11 @@ socket.on("participate-reply", (err, pid) => {
         window.addEventListener("resize", () => {
             if (hasResized && !fsLeft) {
                 socket.emit("fullscreen-closed");
-                sonner.show("Je hebt fullscreen verlaten. Dit is ook verstuurd naar de examinator.", null, "red-bg");
+                sonner.show(
+                    "Je hebt fullscreen verlaten. Dit is ook verstuurd naar de examinator.",
+                    "alert-circle",
+                    "red-bg"
+                );
                 fsLeft = true;
             }
             hasResized = true;
@@ -267,7 +271,7 @@ socket.on("answer-keys", answerKeys => {
 // socket disconnect action, no self-made event
 socket.on("disconnect", () => {
     if (dialog.current.element || isParticipating())
-        sonner.show("Oei, de server is ermee gekapt.", null, "red-bg");
+        sonner.show("Oei, de server is ermee gekapt.", "alert-circle", "red-bg");
 
     if (dialog.current.element) dialog.close();
     if (isParticipating()) setParticipating(false);

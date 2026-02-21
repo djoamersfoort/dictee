@@ -281,11 +281,15 @@ addEventListener("keydown", e => {
 socket.on("disconnect", () => {
     if (dialog.current.id) dialog.close();
 
-    sonner.show("De server is ermee gekapt!", null, "red-bg");
+    sonner.show(
+        "De server is ermee gekapt!",
+        "alert-circle",
+        "red-bg"
+    );
 });
 
 socket.on("participant-cheat", (firstName, lastName, pid, method, meta) => {
-    if (method !== "tab-back") sonner.show(`${firstName} ${lastName} (#${pid + 1}) cheated.`, null, "red-bg");
+    if (method !== "tab-back") sonner.show(`${firstName} ${lastName} (#${pid + 1}) cheated.`, "alert-circle", "red-bg");
     console.log(method, meta);
     for (const child of participantList.children) {
         if (child.querySelector("em").innerText.includes((pid + 1).toString())) {

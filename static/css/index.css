@@ -775,7 +775,9 @@ noscript .dialog {
     }
 }
 .cheat-details {
-    color: salmon;
+    & summary::marker {
+        color: salmon;
+    }
     & div {
         padding-left: 20px;
     }
