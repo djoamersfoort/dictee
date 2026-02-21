@@ -198,7 +198,7 @@ socket.on("participate-reply", (err, pid) => {
             switchTimeInterval = setInterval(() => {
                 switchTime++;
             }, 1000);
-        }else {
+        } else {
             clearInterval(switchTimeInterval);
             socket.emit("tab-switched-back", switchTime);
             sonner.show(
