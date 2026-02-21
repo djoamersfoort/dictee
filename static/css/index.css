@@ -774,3 +774,11 @@ noscript .dialog {
         border-radius: inherit;
     }
 }
+.cheat-details {
+    & summary::marker {
+        color: salmon;
+    }
+    & div {
+        padding-left: 20px;
+    }
+}
