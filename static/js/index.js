@@ -271,7 +271,8 @@ socket.on("answer-keys", answerKeys => {
 // socket disconnect action, no self-made event
 socket.on("disconnect", () => {
     if (dialog.current.element || isParticipating())
-        sonner.show("Oei, de server is ermee gekapt.", "alert-circle", "red-bg");
+        // do not load icon because server is probably offline now
+        sonner.show("Oei, de server is ermee gekapt.", null, "red-bg");
 
     if (dialog.current.element) dialog.close();
     if (isParticipating()) setParticipating(false);
