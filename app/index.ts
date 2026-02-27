@@ -170,31 +170,29 @@ io.on("connection", socket => {
         });
     });
 
+    // anti-cheat events
     socket.on("fullscreen-closed", () => {
         const pid = dictee.getParticipantIndexBySocketID(socket.id);
         const participant = dictee.getParticipantBySocketID(socket.id);
 
-        if (participant && pid !== -1) {
+        if (participant && pid !== -1)
             broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "fullscreen");
-        }
     });
 
     socket.on("tab-switched", () => {
         const pid = dictee.getParticipantIndexBySocketID(socket.id);
         const participant = dictee.getParticipantBySocketID(socket.id);
 
-        if (participant && pid !== -1) {
+        if (participant && pid !== -1)
             broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "tab");
-        }
     });
 
     socket.on("tab-switched-back", (time) => {
         const pid = dictee.getParticipantIndexBySocketID(socket.id);
         const participant = dictee.getParticipantBySocketID(socket.id);
 
-        if (participant && pid !== -1) {
+        if (participant && pid !== -1)
             broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "tab-back", time);
-        }
     });
 
     socket.conn.on("close", () => {
