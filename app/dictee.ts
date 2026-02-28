@@ -20,6 +20,7 @@ import { join } from "path";
 import { readFileSync, writeFile } from "fs";
 
 export type State = "closed" | "open" | "busy";
+export type Cheats = "fullscreen-exit" | "tab-switch";
 
 export type ResultsFile = {
     [key: string]: { // Socket.IO `id`
@@ -42,11 +43,13 @@ class Participant {
         grade: string, // Number.toFixed(1)
         passed: boolean
     } | undefined;
+    cheats: Cheats[];
 
     constructor(firstName: string, lastName: string, socketID: string) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.socketID = socketID;
+        this.cheats = [];
     }
 
     /**

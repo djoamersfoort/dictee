@@ -177,41 +177,26 @@ socket.on("participate-reply", (err, pid) => {
     }
     const participantID = isNaN(pid) ? "---" : `#${+pid + 1}`;
 
-    document.body.requestFullscreen({navigationUI: "hide"}).catch(err => console.error(err.message)).then(() => {
+    document.body.requestFullscreen({navigationUI: "hide"}).then(() => {
         let hasResized = false;
-        let fsLeft = false;
+        let exitedFullscreen = false;
         window.addEventListener("resize", () => {
-            if (hasResized && !fsLeft) {
-                socket.emit("fullscreen-closed");
-                sonner.show(
-                    "Je hebt fullscreen verlaten. Dit is ook verstuurd naar de examinator.",
-                    "alert-circle",
-                    "red-bg"
-                );
-                fsLeft = true;
+            if (hasResized && !exitedFullscreen) {
+                socket.emit("anticheat-trigger", "fullscreen-exit");
+                sonner.show("Oei, je bent uit fullscreen gegaan, valsspeler!", "alert-circle", "red-bg");
+                exitedFullscreen = true;
             }
             hasResized = true;
         });
-    });
-    let switchTime = 0;
-    let switchTimeInterval;
+    }).catch(err => console.error(err.message));
+
     document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            socket.emit("tab-switched");
-            switchTime = 0;
-            switchTimeInterval = setInterval(() => {
-                switchTime++;
-            }, 1000);
-        } else {
-            clearInterval(switchTimeInterval);
-            socket.emit("tab-switched-back", switchTime);
-            sonner.show(
-                "Je bent naar een ander browsertabblad gegaan. Dit is ook verstuurd naar de examinator.",
-                null,
-                "red-bg"
-            );
-        }
+        if (document.hidden)
+            socket.emit("anticheat-trigger", "tab-switch");
+        else
+            sonner.show("Oei, je bent naar een ander browsertabblad gegaan, valsspeler!", "alert-circle", "red-bg");
     });
+
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
     document.getElementById("participant-id").textContent = participantID;
     dialog.switch("waiting-room");

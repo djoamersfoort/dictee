@@ -25,7 +25,7 @@ import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "fs";
 
 import { isExaminer } from "./is-examiner";
-import { Dictee, paths, type State, type ResultsFile } from "./dictee";
+import { Dictee, paths, type State, type Cheats, type ResultsFile } from "./dictee";
 import { version } from "../package.json" with {type: "json"};
 
 
@@ -170,29 +170,14 @@ io.on("connection", socket => {
         });
     });
 
-    // anti-cheat events
-    socket.on("fullscreen-closed", () => {
-        const pid = dictee.getParticipantIndexBySocketID(socket.id);
+    // anti-cheat inspired by SweatyCircle439
+    socket.on("anticheat-trigger", (trigger: Cheats) => {
         const participant = dictee.getParticipantBySocketID(socket.id);
 
-        if (participant && pid !== -1)
-            broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "fullscreen");
-    });
-
-    socket.on("tab-switched", () => {
-        const pid = dictee.getParticipantIndexBySocketID(socket.id);
-        const participant = dictee.getParticipantBySocketID(socket.id);
-
-        if (participant && pid !== -1)
-            broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "tab");
-    });
-
-    socket.on("tab-switched-back", (time) => {
-        const pid = dictee.getParticipantIndexBySocketID(socket.id);
-        const participant = dictee.getParticipantBySocketID(socket.id);
-
-        if (participant && pid !== -1)
-            broadcastExaminers("participant-cheat", participant.firstName, participant.lastName, pid, "tab-back", time);
+        if (participant) {
+            participant.cheats.push(trigger);
+            examinerUpdate();
+        }
     });
 
     socket.conn.on("close", () => {
