@@ -156,7 +156,7 @@ document.getElementById("view-results").addEventListener("click", () => {
 socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
 socket.on("dictee-state", (state, waiting, max) => {
     const full = (waiting === max);
-    document.getElementById("wait-available").style.display = (state === "open" && !full) ? "none" : "";
+    document.getElementById("wait-available").style.color = (state === "open" && !full) ? "var(--grid-card)" : "";
 
     const buttonText = (state === "closed") ? "Niet beschikbaar" :
       (state === "open" && full) ? "Vol" :
@@ -194,7 +194,7 @@ socket.on("participate-reply", (err, pid) => {
         if (document.hidden)
             socket.emit("anticheat-trigger", "tab-switch");
         else
-            sonner.show("Oei, je bent naar een ander browsertabblad gegaan, valsspeler!", "alert-circle", "red-bg");
+            sonner.show("Oei, je bent op een ander browsertabblad geweest, valsspeler!", "alert-circle", "red-bg");
     });
 
     document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
