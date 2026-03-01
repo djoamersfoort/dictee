@@ -175,7 +175,7 @@ io.on("connection", socket => {
         const participant = dictee.getParticipantBySocketID(socket.id);
 
         if (participant) {
-            participant.cheats.push(trigger);
+            participant.cheats[trigger]++;
             examinerUpdate();
         }
     });

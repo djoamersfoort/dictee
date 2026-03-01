@@ -148,6 +148,19 @@ socket.on("examiner-participants", (participants, left) => {
             kickButton.classList.contains("confirm-warning") ? kickParticipant(i) : kickButton.classList.add("confirm-warning");
         });
 
+        const cheatSum = Object.values(participants[i].cheats).reduce((accumulator, current) => accumulator + current, 0);
+        if (cheatSum > 0) {
+            const cheatOverview = document.createElement("div");
+            cheatOverview.classList.add("cheats");
+            for (const c of Object.keys(participants[i].cheats)) cheatOverview.innerHTML += `
+              <div>
+                <img src="/static/icons/${c}.svg" alt="${c}" title="${c}">
+                <span>x${participants[i].cheats[c]}</span>
+              </div>`;
+
+            buttonWrapper.appendChild(cheatOverview);
+        }
+
         buttonWrapper.appendChild(kickButton);
         buttonWrapper.appendChild(viewButton);
 
@@ -281,41 +294,5 @@ addEventListener("keydown", e => {
 socket.on("disconnect", () => {
     if (dialog.current.id) dialog.close();
 
-    sonner.show(
-        "De server is ermee gekapt!",
-        "alert-circle",
-        "red-bg"
-    );
-});
-
-socket.on("participant-cheat", (firstName, lastName, pid, method, meta) => {
-    if (method !== "tab-back") sonner.show(`${firstName} ${lastName} (#${pid + 1}) cheated.`, "alert-circle", "red-bg");
-    console.log(method, meta);
-    for (const child of participantList.children) {
-        if (child.querySelector("em").innerText.includes((pid + 1).toString())) {
-            child.classList.add("red-fg");
-            let cheatDetails = child.querySelector(".cheat-details");
-            if (!cheatDetails) {
-                cheatDetails = document.createElement("details");
-                cheatDetails.classList.add("cheat-details");
-                const summary = document.createElement("summary");
-                summary.innerText = "Valsspeel details";
-                cheatDetails.appendChild(summary);
-                const properties = child.querySelector("b");
-                properties.appendChild(document.createElement("br"));
-                properties.appendChild(cheatDetails);
-            }
-            const cheatStatusWrapper = document.createElement("div");
-            const cheatStatus = document.createElement("span");
-            cheatStatus.innerText =
-                method === "fullscreen"?
-                    "Heeft fullscreen verlaten." :
-                    method === "tab"?
-                        "Is naar een ander browsertabblad gegaan" :
-                        method === "tab-back"?
-                            `Is teruggegaan na ${meta} seconden.` : `Valsgespeeld met onbekende methode: "${method}".`;
-            cheatStatusWrapper.appendChild(cheatStatus);
-            cheatDetails.appendChild(cheatStatusWrapper);
-        }
-    }
+    sonner.show("De server is ermee gekapt!", null, "red-bg");
 });

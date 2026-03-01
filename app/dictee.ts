@@ -43,13 +43,17 @@ class Participant {
         grade: string, // Number.toFixed(1)
         passed: boolean
     } | undefined;
-    cheats: Cheats[];
+    cheats: {[key in Cheats]: number};
 
     constructor(firstName: string, lastName: string, socketID: string) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.socketID = socketID;
-        this.cheats = [];
+
+        this.cheats = {
+            "fullscreen-exit": 0,
+            "tab-switch": 0
+        };
     }
 
     /**

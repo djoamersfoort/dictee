@@ -358,6 +358,23 @@ a {
                         height: 24px;
                     }
                 }
+
+                .cheats {
+                    background: var(--orange-gradient-fg);
+                    background-blend-mode: multiply;
+                    border-radius: var(--spacing);
+                    padding: 0 calc(var(--spacing) / 2);
+                    gap: var(--spacing);
+
+                    &, & div {
+                        display: flex;
+                        align-items: center;
+                    }
+                    & div {
+                        gap: 4px;
+                        font-weight: bold;
+                    }
+                }
             }
             hr {
                 width: calc(100% - 16px);
