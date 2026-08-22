@@ -228,8 +228,15 @@ socket.on("dictee-start", txt => {
     document.getElementById("dictee-form-contents").innerHTML = html;
     document.getElementById("answer-switcher").style.display = "";
 
-    for (const i of document.querySelectorAll(".DicteeForm input"))
+    for (const i of document.querySelectorAll(".DicteeForm input")) {
         i.addEventListener("input", validateFormCompletion);
+        i.addEventListener("keydown", e => {
+            if (e.ctrlKey && e.key.toLowerCase() === "v") {
+                socket.emit("anticheat-trigger", "clipboard-use");
+                sonner.show("Oei, je hebt het klembord misbruikt, valsspeler!", "alert-circle", "red-bg");
+            }
+        });
+    }
     validateFormCompletion();
 
     dialog.close(document.body);
