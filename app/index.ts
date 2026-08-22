@@ -312,6 +312,12 @@ app.get("/api/v1/lichtkrant", c => {
     );
 });
 
+app.notFound(c => {
+    return c.text(new TextDecoder().decode(
+        readFileSync(join(import.meta.dirname, "pages", "not-found.html"))
+    ), 404, {"Content-Type": "text/html"});
+});
+
 export default {
     ...engine.handler(),
     port,
