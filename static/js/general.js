@@ -24,6 +24,9 @@ const htmlsp = input => input
   .replaceAll("<", "&lt;")
   .replaceAll(">", "&gt;");
 
+// nbsp: replace with non-breaking spaces
+const nbsp = input => input.replaceAll(" ", "&nbsp;");
+
 const shortDisableOverflow = () => {
     document.body.style.overflowY = "hidden";
     setTimeout(() => document.body.style.overflowY = "", 3000);

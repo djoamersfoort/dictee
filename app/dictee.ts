@@ -20,7 +20,7 @@ import { join } from "path";
 import { readFileSync, writeFile } from "fs";
 
 export type State = "closed" | "open" | "busy";
-export type Cheats = "fullscreen-exit" | "tab-switch";
+export type Cheats = "fullscreen-exit" | "tab-switch" | "clipboard-use";
 
 export type ResultsFile = {
     [key: string]: { // Socket.IO `id`
@@ -52,7 +52,8 @@ class Participant {
 
         this.cheats = {
             "fullscreen-exit": 0,
-            "tab-switch": 0
+            "tab-switch": 0,
+            "clipboard-use": 0
         };
     }
 

@@ -167,6 +167,11 @@ body::backdrop {
         grid-template-rows: 0fr 1fr 0fr 0fr;
         grid-template-columns: 2fr 1fr;
     }
+    &.ErrorPage {
+        h1 {
+            font-size: 144px;
+        }
+    }
 }
 
 .heading {
