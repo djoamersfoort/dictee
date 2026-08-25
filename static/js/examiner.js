@@ -99,8 +99,8 @@ const viewResult = (e, participant) => {
         const className = (participant.result.answers[i].correct && givenAnswers[i] === answers[i]) ? "green-fg" :
           (participant.result.answers[i].correct || givenAnswers[i] === answers[i]) ? "orange-fg" : "red-fg";
 
-        textGiven = textGiven.replace("{}", `<span class="${className}">${htmlsp(givenAnswers[i])}</span>`);
-        textCorrect = textCorrect.replace("{}", `<span class="green-fg">${htmlsp(answers[i])}</span>`);
+        textGiven = textGiven.replace("{}", `<span class="${className}">${nbsp(htmlsp(givenAnswers[i]))}</span>`);
+        textCorrect = textCorrect.replace("{}", `<span class="green-fg">${nbsp(htmlsp(answers[i]))}</span>`);
         if (!textGiven.includes("{}") || !textCorrect.includes("{}")) break;
     }
 
