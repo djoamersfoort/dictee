@@ -33,6 +33,7 @@ const setParticipating = (to) => {
 
     if (!to) {
         socket.emit("leave");
+        enforceFullscreenAnticheat = false;
         document.exitFullscreen().catch(() => {});
     }
 };
@@ -153,6 +154,8 @@ document.getElementById("view-results").addEventListener("click", () => {
 });
 
 // Socket.IO events
+let enforceFullscreenAnticheat = false;
+
 socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
 socket.on("dictee-state", (state, waiting, max) => {
     const full = (waiting === max);
@@ -178,15 +181,15 @@ socket.on("participate-reply", (err, pid) => {
     const participantID = isNaN(pid) ? "---" : `#${+pid + 1}`;
 
     document.body.requestFullscreen({navigationUI: "hide"}).then(() => {
-        let hasResized = false;
         let exitedFullscreen = false;
+        enforceFullscreenAnticheat = true;
+
         window.addEventListener("resize", () => {
-            if (hasResized && !exitedFullscreen) {
+            if (enforceFullscreenAnticheat && !exitedFullscreen) {
                 socket.emit("anticheat-trigger", "fullscreen-exit");
                 sonner.show("Oei, je bent uit fullscreen gegaan, valsspeler!", "alert-circle", "red-bg");
                 exitedFullscreen = true;
             }
-            hasResized = true;
         });
     }).catch(err => console.error(err.message));
 
