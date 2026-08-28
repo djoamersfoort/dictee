@@ -5,6 +5,9 @@ on:
     # Publish `main` as Docker `latest` image.
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   schedule:
     - cron:  '0 8 1 * *'
   workflow_dispatch: {}
