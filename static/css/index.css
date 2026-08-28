@@ -246,7 +246,7 @@ a {
             margin-bottom: 0;
 
             div {
-                width: stretch;
+                width: -webkit-fill-available;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -386,14 +386,17 @@ a {
                 margin: 0 8px;
             }
         }
-        #no-participants img {
-            width: 25%;
-            margin: auto;
-            margin-top: 10%;
-            display: block;
-        }
-        #no-participants p {
-            text-align: center;
+        #no-participants {
+            height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: -100px;
+
+            img {
+                width: 25%;
+            }
         }
     }
     &.Dashboard {

@@ -33,11 +33,11 @@ const setParticipating = (to) => {
 
     if (!to) {
         socket.emit("leave");
-        enforceFullscreenAnticheat = false;
         document.exitFullscreen().catch(() => {});
     }
 };
 const isParticipating = () => document.querySelector(".Home").style.display === "none";
+const enforceAnticheats = () => isParticipating() || dialog.current.id === "waiting-room";
 
 // Homepage
 document.getElementById("rules-link").addEventListener("click", e => dialog.open("rules", e.target, false));
@@ -154,8 +154,6 @@ document.getElementById("view-results").addEventListener("click", () => {
 });
 
 // Socket.IO events
-let enforceFullscreenAnticheat = false;
-
 socket.on("dictee-version", v => document.getElementById("version").textContent = `v${v}`);
 socket.on("dictee-state", (state, waiting, max) => {
     const full = (waiting === max);
@@ -181,28 +179,10 @@ socket.on("participate-reply", (err, pid) => {
     const participantID = isNaN(pid) ? "---" : `#${+pid + 1}`;
 
     document.body.requestFullscreen({navigationUI: "hide"}).then(() => {
-        let exitedFullscreen = false;
-        enforceFullscreenAnticheat = true;
-
-        window.addEventListener("resize", () => {
-            if (enforceFullscreenAnticheat && !exitedFullscreen) {
-                socket.emit("anticheat-trigger", "fullscreen-exit");
-                sonner.show("Oei, je bent uit fullscreen gegaan, valsspeler!", "alert-circle", "red-bg");
-                exitedFullscreen = true;
-            }
-        });
+        document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
+        document.getElementById("participant-id").textContent = participantID;
+        dialog.switch("waiting-room");
     }).catch(err => console.error(err.message));
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden)
-            socket.emit("anticheat-trigger", "tab-switch");
-        else
-            sonner.show("Oei, je bent op een ander browsertabblad geweest, valsspeler!", "alert-circle", "red-bg");
-    });
-
-    document.getElementById("waiting-room-welcome").textContent = document.getElementById("first-name").value;
-    document.getElementById("participant-id").textContent = participantID;
-    dialog.switch("waiting-room");
 });
 
 socket.on("force-quit", (reason) => {
@@ -275,4 +255,23 @@ socket.on("disconnect", () => {
     participateStatus.textContent = "Offline";
     participateStatus.className = "red-fg";
     participateButton.disabled = true;
+});
+
+// anti-cheats
+document.addEventListener("fullscreenchange", e => {
+    if (!enforceAnticheats() || !socket.connected) return;
+
+    if (!document.fullscreen) {
+        socket.emit("anticheat-trigger", "fullscreen-exit");
+        sonner.show("Oei, je bent uit fullscreen gegaan, valsspeler!", "alert-circle", "red-bg");
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!enforceAnticheats() || !socket.connected) return;
+
+    if (document.hidden)
+        socket.emit("anticheat-trigger", "tab-switch");
+    else
+        sonner.show("Oei, je bent op een ander browsertabblad geweest, valsspeler!", "alert-circle", "red-bg");
 });

@@ -271,16 +271,13 @@ socket.on("examiner-dashboard", (state, participantsIn, lichtkrantAPI) => {
 });
 
 // event handlers
-const resizeNecessaryElements = () => {
+const resizeParticipantList = () => {
     participantList.style.maxHeight =
       `${participantList.parentElement.clientHeight - 90}px`;
-
-    noParticipants.style.marginTop =
-      `${(noParticipants.parentElement.clientHeight - noParticipants.clientHeight - 125) / 2}px`;
 };
 
-addEventListener("load", resizeNecessaryElements);
-addEventListener("resize", resizeNecessaryElements);
+addEventListener("load", resizeParticipantList);
+addEventListener("resize", resizeParticipantList);
 
 addEventListener("keydown", e => {
     if (e.key === "Escape" && dialog.current.id) dialog.close();
