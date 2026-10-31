@@ -32,6 +32,4 @@ jobs:
           file: Dockerfile
           context: .
           push: true
-          tags: ghcr.io/djoamersfoort/dictee/djo-dictee:latest
-          
-          
+          tags: ghcr.io/djoamersfoort/dictee/djo-dictee:main
