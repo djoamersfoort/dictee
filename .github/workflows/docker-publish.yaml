@@ -12,6 +12,10 @@ on:
     - cron:  '0 8 1 * *'
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   IMAGE_NAME: djo-dictee
 
