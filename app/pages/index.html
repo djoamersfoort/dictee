@@ -31,6 +31,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
         <link rel="stylesheet" href="/static/css/index.css" type="text/css">
     </head>
     <body>
@@ -76,6 +77,9 @@
                     <li>Wacht totdat de examinator het dictee start.</li>
                     <li>Je krijgt een tekst te zien waarin woorden zijn weggelaten.<br>De examinator leest deze hardop voor.</li>
                     <li>Vul de weggelaten woorden in die de examinator uitspreekt.</li>
+                    <li>Bij een topografieronde klik je op de kaart de gevraagde plaatsen aan.</li>
+                    <li>Bij een rekenronde reken je de sommen uit en vul je de antwoorden in.</li>
+                    <li>Bij een Arduino-ronde bouw je met de gegeven onderdelen een schakeling die doet wat er gevraagd wordt.</li>
                     <li>Zodra je alles hebt ingevuld, klik je op "Inleveren!".</li>
                     <li>Je krijgt direct de uitslag.</li>
                 </ol>
@@ -154,14 +158,22 @@
                     <h1 id="dictee-form-header"></h1>
                 </div>
             </div>
-            <div class="card DicteeForm">
-                <h3 id="dictee-form-title"></h3>
-                <p id="dictee-form-contents"></p>
-                <button id="answer-switcher" class="main-bg">
-                    <span id="answer-switcher-text">Laat juiste antwoorden zien</span>
-                    <img id="answer-switcher-icon" src="/static/icons/check-circle.svg" alt="Switch user/correct" class="img-r">
+            <div id="round-nav" class="card RoundNav">
+                <button id="round-prev" class="main-bg small">
+                    <img src="/static/icons/arrow-right.svg" alt="Vorige" class="img-r rot180">
+                    <span>Vorige ronde</span>
+                </button>
+                <h3 id="round-nav-title"></h3>
+                <button id="round-next" class="main-bg small">
+                    <span>Volgende ronde</span>
+                    <img src="/static/icons/arrow-right.svg" alt="Volgende" class="img-r">
+                </button>
+                <button id="round-done" class="green-bg small">
+                    <span>Klaar met deze ronde!</span>
+                    <img src="/static/icons/arrow-right.svg" alt="Klaar" class="img-r">
                 </button>
             </div>
+            <div id="dictee-rounds"></div>
             <div class="card DicteeSubmit">
                 <h3 id="dictee-submit-h3">Klaar?</h3>
                 <p id="dictee-submit-p">Lever het dictee in. Je krijgt vervolgens direct de uitslag te zien.</p>
@@ -203,7 +215,10 @@
                                 <li>correcte spelling;</li>
                                 <li>correct hoofdlettergebruik;</li>
                                 <li>correcte plaatsing van leestekens en trema's;</li>
-                                <li>correcte wijze van getallen uitschrijven.</li>
+                                <li>correcte wijze van getallen uitschrijven;</li>
+                                <li>bij topografierondes: het nauwkeurig aanwijzen van de gevraagde locaties op de kaart;</li>
+                                <li>bij rekenrondes: het juist uitrekenen van de sommen;</li>
+                                <li>bij Arduino-rondes: het bouwen van een werkende en veilige schakeling.</li>
                             </ol>
                         </ol>
                         <h4>4. Rechten van kandidaten</h4>
@@ -237,20 +252,28 @@
                         </ol>
                         <h4>7. Zak-/slaagregeling</h4>
                         <ol>
+                            <li>Een dictee kan bestaan uit meerdere rondes. Per ronde worden als volgt punten toegekend:</li>
+                                <ol>
+                                    <li>dicteeronde: één punt per juist ingevuld woord;</li>
+                                    <li>rekenronde: één punt per juist uitgerekende som;</li>
+                                    <li>Arduino-ronde: één punt per schakeling die alle automatische tests doorstaat;</li>
+                                    <li>topografieronde: één punt per locatie die binnen de grenzen van de gevraagde plaats of het gevraagde gebied wordt aangeklikt,
+                                          en een evenredig lager aantal punten naarmate de klik verder buiten deze grenzen ligt.</li>
+                                </ol>
                             <li>Het eindcijfer van een kandidaat wordt berekend door:</li>
                                 <ol>
-                                    <li>het aantal juist gegeven antwoorden te vermenigvuldigen met 9;</li>
-                                    <li>het resultaat uit onderdeel a te delen door het totale aantal vragen;</li>
+                                    <li>het totale aantal behaalde punten te vermenigvuldigen met 9;</li>
+                                    <li>het resultaat uit onderdeel a te delen door het totale aantal te behalen punten;</li>
                                     <li>het resultaat uit onderdeel b met 1 te verhogen.</li>
                                 </ol>
-                            <li>Een kandidaat is geslaagd voor het dictee indien diens eindcijfer groter is dan of gelijk is aan 5,5.</li>
+                            <li>Een kandidaat is geslaagd voor het dictee indien diens eindcijfer als bedoeld in lid 2 groter is dan of gelijk is aan 5,5.</li>
                         </ol>
                         <h4>8. Prijsuitreiking</h4>
                         <ol>
                             <li>De examinator stelt voorafgaand aan het dictee vast of er een prijs wordt uitgereikt en wat deze prijs is.</li>
-                            <li>De prijs wordt uitsluitend uitgereikt aan de kandidaat met de meeste juiste antwoorden.</li>
+                            <li>De prijs wordt uitsluitend uitgereikt aan de kandidaat met de meeste punten.</li>
                             <li>De prijs wordt ten allen tijde uitgereikt, ongeacht of de kandidaat als bedoeld in lid 2 geslaagd of gezakt is
-                                  in de zin van artikel 7, lid 2 van dit reglement.</li>
+                                  in de zin van artikel 7, lid 3 van dit reglement.</li>
                             <li>Er worden geen prijzen uitgereikt als slechts één kandidaat heeft deelgenomen.</li>
                         </ol>
                         <h4>9. Overtredingen</h4>
@@ -266,13 +289,13 @@
                         <h4>10. Privacy</h4>
                         <ol>
                             <li>De kandidaat geeft bij deelname uitsluitend diens voor- en achternaam op.</li>
-                            <li>Naast de in artikel 10, lid 1 genoemde gegevens worden tevens alle door kandidaten ingevulde woorden opgeslagen.</li>
+                            <li>Naast de in artikel 10, lid 1 genoemde gegevens worden tevens alle door kandidaten ingevulde antwoorden en aangeklikte locaties opgeslagen.</li>
                             <li>De lichtkrant toont na afloop van het dictee uitsluitend de volgende gegevens:</li>
                             <ol>
                                 <li>de voornaam van de kandidaat;</li>
-                                <li>het aantal juist gegeven antwoorden door de kandidaat als bedoeld in onderdeel a;</li>
-                                <li>het totale aantal invoervelden waaruit het dictee is samengesteld;</li>
-                                <li>het eindcijfer van de kandidaat als bedoeld in onderdeel a, als berekend in artikel 7, lid 1;</li>
+                                <li>het aantal behaalde punten door de kandidaat als bedoeld in onderdeel a;</li>
+                                <li>het totale aantal te behalen punten in het dictee;</li>
+                                <li>het eindcijfer van de kandidaat als bedoeld in onderdeel a, als berekend in artikel 7, lid 2;</li>
                                 <li>of de kandidaat als bedoeld in onderdeel a is geslaagd of gezakt.</li>
                             </ol>
                             <li>De in lid 1 en 2 benoemde gegevens worden uiterlijk tot het volgende dictee bewaard.</li>
@@ -371,6 +394,10 @@
         <script src="/static/js/general.js"></script>
         <script src="/static/js/dialog.js"></script>
         <script src="/static/js/sonner.js"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+        <script src="/static/js/topo.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@wokwi/elements@1.9.1/dist/wokwi-elements.bundle.min.js"></script>
         <script src="/static/js/index.js" type="module"></script>
         <noscript>
             <div class="dialog">

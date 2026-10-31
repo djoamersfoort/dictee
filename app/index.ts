@@ -25,7 +25,11 @@ import { join } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from "fs";
 
 import { isExaminer } from "./is-examiner";
-import { Dictee, paths, type State, type Cheats, type ResultsFile } from "./dictee";
+import { Dictee, Participant, normalizeSubmission, paths, type State, type Cheats, type ResultsFile } from "./dictee";
+import {
+    loadRounds, saveRounds, sanitizeRounds, validateRound, searchLocations,
+    toParticipantRound, toAnswerKeys, roundMaxPoints, type Round
+} from "./rounds";
 import { version } from "../package.json" with {type: "json"};
 
 
@@ -34,23 +38,56 @@ if (!existsSync(join(import.meta.dirname, "..", "data")))
     mkdirSync(join(import.meta.dirname, "..", "data"));
 
 // file existence check
-for (const i of [paths.contentsFile, paths.resultsFile, paths.examinersFile]) {
-    const content = i.endsWith("json") ? "{}" : "Een titel\nEen {episch} dictee!";
-    if (!existsSync(i)) writeFileSync(i, content);
-}
+for (const i of [paths.resultsFile, paths.examinersFile])
+    if (!existsSync(i)) writeFileSync(i, "{}");
+
+let rounds: Round[] = loadRounds();
 
 // Declarations
-const port = 7000;
+const port = 3000;
 const app = new Hono();
 const io = new Server({
     connectionStateRecovery: {maxDisconnectionDuration: 120e3}
 });
 const engine = new Engine();
 const dictee = new Dictee();
-const formInput = /\{(.*?)\}/g;
 
 // Socket.IO
 const examinerSocketIDs: string[] = [];
+
+/**
+ * Store the results of graded participants and send them their result and the answer keys.
+ */
+const sendResults = (graded: Participant[], onSaved?: () => void) => {
+    if (graded.length === 0) return;
+
+    const results: ResultsFile = dictee.getFinishedParticipantData();
+    for (const p of graded) if (p.result)
+        results[p.socketID] = {firstName: p.firstName, lastName: p.lastName, result: p.result};
+
+    writeFile(paths.resultsFile, JSON.stringify(results, null, 4), (err) => {
+        if (err) throw err;
+        onSaved?.();
+        const keys = dictee.rounds.map(toAnswerKeys);
+
+        io.fetchSockets().then(sockets => {
+            for (const p of graded) {
+                const s = sockets.find(s => s.id === p.socketID);
+                const result = p.result;
+                if (!s || !result) continue;
+
+                s.emit("results", result.score, result.total, result.grade, result.passed);
+                setTimeout(() => s.emit("answer-keys", keys, result.rounds), 500);
+            }
+        }).catch(() => {});
+    });
+};
+
+/** The rounds being taken and which one is current, for the examiner dashboard. */
+const liveState = () => ({
+    rounds: dictee.getState() === "busy" ? dictee.rounds.map(r => ({id: r.id, type: r.type, title: r.title})) : [],
+    currentRound: dictee.currentRound
+});
 
 /**
  * Broadcast a message to **all** clients connected to the dictee site.
@@ -130,44 +167,37 @@ io.on("connection", socket => {
         examinerUpdate();
     });
 
-    socket.on("submit-answers", (answers: string[]) => {
+    socket.on("submit-answers", (submission: unknown) => {
         // find participant based on socket ID
         const sender = dictee.getParticipantBySocketID(socket.id);
-        if (!sender) return;
+        if (!sender || dictee.getState() !== "busy") return;
 
-        // get answer keys and filter the curly braces out
-        const fetchedAnswerKeys = new TextDecoder().decode(
-            readFileSync(paths.contentsFile)
-        ).match(formInput) as string[];
-
-        const answerKeys: string[] = [];
-        for (const a of fetchedAnswerKeys) answerKeys.push(a.replaceAll(/(\{|\})/g, ""));
-
-        // check their answers and update examiner pages
-        sender.check(answers, answerKeys);
+        // check their answers, update examiner pages and send the result
+        if (!sender.check(submission, dictee.rounds) || !sender.result) return;
         examinerUpdate();
+        sendResults([sender], examinerUpdate);
+    });
 
-        // write to results file and send result data to sender
-        const results: ResultsFile = JSON.parse(new TextDecoder().decode(
-            readFileSync(paths.resultsFile)
-        ));
-        results[sender.socketID] = {
-            firstName: sender.firstName,
-            lastName: sender.lastName,
-            result: sender.result ?? {answers: [], grade: "1.0", passed: false}
+    socket.on("round-answers", (answers: unknown) => {
+        const participant = dictee.getParticipantBySocketID(socket.id);
+        if (!participant || participant.result || dictee.getState() !== "busy") return;
+        if (!Array.isArray(answers) || JSON.stringify(answers).length > 100_000) return;
+
+        participant.draft = answers;
+    });
+
+    socket.on("round-progress", (round: unknown, filled: unknown, done: unknown) => {
+        const participant = dictee.getParticipantBySocketID(socket.id);
+        if (!participant || participant.result || dictee.getState() !== "busy") return;
+        if (!Number.isInteger(round) || !Number.isInteger(filled)) return;
+
+        const r = dictee.rounds[round as number];
+        if (!r) return;
+        const total = roundMaxPoints(r);
+        participant.progress[round as number] = {
+            filled: Math.max(0, Math.min(filled as number, total)), total, done: done === true
         };
-
-        writeFile(paths.resultsFile, JSON.stringify(results, null, 4), (err) => {
-            if (err) throw err;
-            socket.emit("results",
-                sender.getCorrectAnswerCount(),
-                sender.result?.answers.length,
-                sender.result?.grade,
-                sender.result?.passed
-            );
-
-            setTimeout(() => socket.emit("answer-keys", answerKeys), 500);
-        });
+        examinerUpdate();
     });
 
     // anti-cheat inspired by SweatyCircle439
@@ -199,33 +229,61 @@ io.on("connection", socket => {
      */
     const examinerUpdate = () => {
         broadcastExaminers("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipantData());
-        broadcastExaminers("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
+        broadcastExaminers("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI,
+          rounds.filter(r => r.active).length);
+        broadcastExaminers("examiner-live", liveState());
     };
 
     // examiner only socket events
     isExaminer(auth).then(() => {
         if (!examinerSocketIDs.includes(socket.id)) examinerSocketIDs.push(socket.id);
 
-        const contents = new TextDecoder().decode(readFileSync(paths.contentsFile)).split("\n");
-        const title = contents.shift();
-        while (contents.length > 0 && contents[contents.length - 1]?.trim().length === 0) contents.pop();
-
-        socket.emit("examiner-contents", title, contents.join("\n"));
+        socket.emit("examiner-rounds", rounds);
         socket.emit("examiner-participants", dictee.getParticipants(false), dictee.getFinishedParticipantData());
-        socket.emit("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI);
+        socket.emit("examiner-dashboard", dictee.getState(), dictee.getParticipantCount() > 0, dictee.lichtkrantAPI,
+          rounds.filter(r => r.active).length);
+        socket.emit("examiner-live", liveState());
 
-        socket.on("examiner-dictee-update", (body: string) => {
-            if (dictee.getState() !== "closed") return;
+        socket.on("examiner-set-round", (to: unknown) => {
+            if (dictee.getState() !== "busy" || !Number.isInteger(to)) return;
+            if ((to as number) < 0 || (to as number) >= dictee.rounds.length) return;
 
-            const lines = body.split("\n");
-            while (lines.length > 0 && lines[lines.length - 1]?.trim().length === 0) lines.pop();
+            dictee.currentRound = to as number;
+            broadcastParticipants("dictee-round", dictee.currentRound);
+            examinerUpdate();
+        });
 
-            writeFile(paths.contentsFile, lines.join("\n"), err => {
-                socket.emit("examiner-dictee-update-reply", err);
+        socket.on("examiner-rounds-update", (input: unknown) => {
+            if (dictee.getState() !== "closed") {
+                socket.emit("examiner-rounds-update-reply", "Sluit het dictee af om het te kunnen bewerken.");
+                return;
+            }
 
-                const title = lines.shift()?.replaceAll(/\{(.*?)\}/g, "$1");
-                broadcastExaminers("examiner-contents", title, lines.join("\n"));
+            const updated = sanitizeRounds(input);
+            for (const r of updated) {
+                const problem = validateRound(r);
+                if (problem) {
+                    socket.emit("examiner-rounds-update-reply", `Ronde "${r.title || "zonder titel"}": ${problem}.`);
+                    return;
+                }
+            }
+
+            saveRounds(updated, err => {
+                socket.emit("examiner-rounds-update-reply", err?.message ?? null);
+                if (err) return;
+
+                rounds = updated;
+                broadcastExaminers("examiner-rounds", rounds);
+                examinerUpdate();
             });
+        });
+
+        socket.on("examiner-location-search", (query: unknown) => {
+            if (typeof query !== "string" || !query.trim()) return;
+
+            searchLocations(query.trim().slice(0, 200))
+                .then(results => socket.emit("examiner-location-search-reply", query, null, results))
+                .catch(err => socket.emit("examiner-location-search-reply", query, String(err?.message ?? err), []));
         });
 
         socket.on("examiner-kick", (who: number) => {
@@ -241,6 +299,18 @@ io.on("connection", socket => {
         });
 
         socket.on("examiner-set-state", (to: State) => {
+            if (!["closed", "open", "busy", "ended"].includes(to)) return;
+            if (to === "ended" && dictee.getState() !== "busy") return;
+
+            if (to === "busy") {
+                const active = rounds.filter(r => r.active);
+                if (active.length === 0) {
+                    socket.emit("examiner-rounds-update-reply", "Er zijn geen actieve rondes om af te nemen.");
+                    return;
+                }
+                dictee.rounds = structuredClone(active);
+                dictee.currentRound = 0;
+            }
             dictee.setState(to);
 
             broadcast("dictee-state", dictee.getState(), dictee.getParticipantCount(), Dictee.maxParticipants);
@@ -250,12 +320,18 @@ io.on("connection", socket => {
                 const closeMessage = "Oei, de examinator heeft het dictee afgesloten.";
                 broadcast("force-quit", closeMessage);
             } else if (to === "busy") {
-                const contents = new TextDecoder().decode(readFileSync(paths.contentsFile));
-                const dicteePayload = contents.replaceAll(/\{(.*?)\}/g, "{}");
-                broadcastParticipants("dictee-start", dicteePayload);
+                broadcastParticipants("dictee-start", dictee.rounds.map(toParticipantRound), dictee.currentRound);
 
                 const startMessage = "Oei, de examinator heeft het dictee al gestart.";
                 broadcastNonParticipants("force-quit", startMessage);
+            } else if (to === "ended") {
+                // everyone who did not hand in yet gets graded with their latest answers
+                const unfinished = dictee.getParticipants().filter(p => !p.result);
+                for (const p of unfinished) p.check(normalizeSubmission(p.draft, dictee.rounds), dictee.rounds);
+
+                broadcastParticipants("dictee-ended");
+                sendResults(unfinished, examinerUpdate);
+                examinerUpdate();
             }
         });
         socket.on("examiner-set-lichtkrant-api", (to: boolean) => {
@@ -300,8 +376,8 @@ app.get("/api/v1/lichtkrant", c => {
     for (const p of range) {
         payload.push({
             name: p.firstName,
-            score: p.result?.answers.filter(a => a.correct).length,
-            total: p.result?.answers.length,
+            score: p.result?.score,
+            total: p.result?.total,
             grade: p.result?.grade,
             passed: p.result?.passed
         });

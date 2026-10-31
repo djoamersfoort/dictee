@@ -19,31 +19,65 @@
 import { join } from "path";
 import { readFileSync, writeFile } from "fs";
 
-export type State = "closed" | "open" | "busy";
+import { isCorrectAnswer } from "../static/js/calc.js";
+import { gradeCircuit, sanitizeCircuit, emptyCircuit } from "../static/js/circuit.js";
+import { dicteeAnswerKeys, rekenenSums, roundMaxPoints, scoreTopoClick, type Round, type RoundResult, type LatLng } from "./rounds";
+
+/** `ended`: the examiner stopped the dictee, everyone got graded, but results are kept until `closed`. */
+export type State = "closed" | "open" | "busy" | "ended";
 export type Cheats = "fullscreen-exit" | "tab-switch" | "clipboard-use";
+
+export type Result = {
+    rounds: RoundResult[],
+    score: number, // points, topo answers can give partial points
+    total: number,
+    grade: string, // Number.toFixed(1)
+    passed: boolean
+};
 
 export type ResultsFile = {
     [key: string]: { // Socket.IO `id`
         firstName: string,
         lastName: string,
-        result: {
-            answers: {given: string, correct: boolean}[],
-            grade: string, // Number.toFixed(1)
-            passed: boolean
-        }
+        result: Result
     }
 };
 
-class Participant {
+const isLatLng = (x: any): x is LatLng =>
+    x && typeof x === "object" && Number.isFinite(x.lat) && Number.isFinite(x.lng) && Math.abs(x.lat) <= 90;
+
+/**
+ * Turn possibly incomplete answers into a valid submission: missing or invalid rounds become empty answers.
+ * Used when the examiner ends the dictee before a participant handed in.
+ */
+export const normalizeSubmission = (submission: unknown, rounds: Round[]) => rounds.map((round, r) => {
+    const given = Array.isArray(submission) && Array.isArray(submission[r]) ? submission[r] as unknown[] : [];
+    if (round.type === "circuit")
+        return round.questions.map((q, i) => given[i] ? sanitizeCircuit(given[i], q.parts) : emptyCircuit());
+
+    const length = round.type === "dictee" ? dicteeAnswerKeys(round.text).length :
+        round.type === "rekenen" ? rekenenSums(round.text).length : round.locations.length;
+
+    return Array.from({length}, (_, i) =>
+        round.type === "topo" ? (isLatLng(given[i]) ? given[i] : null) :
+        (typeof given[i] === "string" ? given[i] : ""));
+});
+
+export class Participant {
     firstName: string;
     lastName: string;
     socketID: string;
-    result: {
-        answers: {given: string, correct: boolean}[],
-        grade: string, // Number.toFixed(1)
-        passed: boolean
-    } | undefined;
+    result: Result | undefined;
     cheats: {[key in Cheats]: number};
+    /** Live progress per round index, shown to examiners. */
+    progress: {[round: number]: {filled: number, total: number, done: boolean}} = {};
+    /** Latest (not yet handed in) answers, so the examiner can end the dictee for everyone. */
+    draft: unknown = null;
+
+    toJSON() {
+        const {draft, ...visible} = this; // drafts stay on the server
+        return visible;
+    }
 
     constructor(firstName: string, lastName: string, socketID: string) {
         this.firstName = firstName;
@@ -58,35 +92,65 @@ class Participant {
     }
 
     /**
-     * Get the amount of correct answers given by the participant.
-     * @returns 0 if not finished yet
+     * Compare the submitted answers of the participant (one array per round) to the correct ones and store them.
+     * @returns whether the submission was accepted.
      */
-    getCorrectAnswerCount() {
-        if (!this.result) return 0;
+    check(submission: unknown, rounds: Round[]) {
+        if (this.result || !Array.isArray(submission) || submission.length !== rounds.length) return false;
 
-        return this.result.answers.filter(a => a.correct).length;
-    }
+        const results: RoundResult[] = [];
+        let score = 0, total = 0;
 
-    /**
-     * Compare the given answers of the participant to the correct ones and store them.
-     */
-    check(givenAnswers: string[], correctAnswers: string[]) {
-        if (this.result || givenAnswers.length !== correctAnswers.length) return;
+        for (let r = 0; r < rounds.length; r++) {
+            const round = rounds[r]!;
+            const given = submission[r];
+            if (!Array.isArray(given)) return false;
 
-        this.result = {answers: [], grade: "1.0", passed: false};
+            if (round.type === "dictee") {
+                const keys = dicteeAnswerKeys(round.text);
+                if (given.length !== keys.length || given.some(g => typeof g !== "string")) return false;
 
-        givenAnswers.forEach((given, i) => {
-            const correct = (given === correctAnswers[i]);
-            this.result?.answers.push({given, correct});
-        });
+                const answers = keys.map((key, i) => ({given: given[i] as string, correct: given[i] === key}));
+                score += answers.filter(a => a.correct).length;
+                results.push({type: "dictee", roundID: round.id, answers});
+            } else if (round.type === "circuit") {
+                if (given.length !== round.questions.length) return false;
 
-        this.result.grade = (this.getCorrectAnswerCount() * 9 / correctAnswers.length + 1).toFixed(1);
-        this.result.passed = (+this.result.grade >= Dictee.passThreshold);
+                const answers = round.questions.map((q, i) => {
+                    const circuit = sanitizeCircuit(given[i], q.parts);
+                    return {given: circuit, ...gradeCircuit(q, circuit)};
+                });
+                score += answers.reduce((sum, a) => sum + a.score, 0);
+                results.push({type: "circuit", roundID: round.id, answers});
+            } else if (round.type === "rekenen") {
+                const sums = rekenenSums(round.text);
+                if (given.length !== sums.length || given.some(g => typeof g !== "string")) return false;
+
+                const answers = sums.map((sum, i) => ({given: given[i] as string, correct: isCorrectAnswer(given[i], sum.value)}));
+                score += answers.filter(a => a.correct).length;
+                results.push({type: "rekenen", roundID: round.id, answers});
+            } else {
+                if (given.length !== round.locations.length) return false;
+
+                const answers = round.locations.map((location, i) => {
+                    const click = isLatLng(given[i]) ? {lat: given[i].lat, lng: given[i].lng} : null;
+                    if (!click) return {given: null, distanceKm: null, score: 0, nearest: null};
+                    return {given: click, ...scoreTopoClick(click, location, round.maxDistanceKm)};
+                });
+                score += answers.reduce((sum, a) => sum + a.score, 0);
+                results.push({type: "topo", roundID: round.id, answers});
+            }
+            total += roundMaxPoints(round);
+        }
+
+        score = Math.round(score * 100) / 100;
+        const grade = total > 0 ? (score * 9 / total + 1).toFixed(1) : "1.0";
+        this.result = {rounds: results, score, total, grade, passed: +grade >= Dictee.passThreshold};
+        return true;
     }
 }
 
 export const paths = {
-    contentsFile: join(import.meta.dirname, "..", "data", "contents.txt"),
     resultsFile: join(import.meta.dirname, "..", "data", "results.json"),
     examinersFile: join(import.meta.dirname, "..", "data", "examiners.json")
 };
@@ -98,6 +162,10 @@ export class Dictee {
     #state: State;
     #participants: Participant[];
     lichtkrantAPI: boolean;
+    /** Snapshot of the active rounds, taken when the dictee starts. */
+    rounds: Round[] = [];
+    /** Index (in `rounds`) of the round participants are currently working on, set by examiners. */
+    currentRound = 0;
 
     constructor() {
         this.#state = "closed";
@@ -187,9 +255,13 @@ export class Dictee {
      */
     getFinishedParticipantData(): ResultsFile {
         try {
-            return JSON.parse(
+            const data: ResultsFile = JSON.parse(
                 new TextDecoder().decode(readFileSync(paths.resultsFile))
             );
+            // drop results stored by versions without rounds
+            for (const key of Object.keys(data))
+                if (!Array.isArray(data[key]?.result?.rounds)) delete data[key];
+            return data;
         } catch (err) {
             return {};
         }

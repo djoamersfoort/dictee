@@ -25,6 +25,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
         <link rel="stylesheet" href="/static/css/index.css" type="text/css">
     </head>
     <body>
@@ -38,22 +39,29 @@
             </div>
 
             <div class="card Contents">
-                <h3>Inhoud</h3>
+                <h3 class="flex">
+                    <span>Rondes</span>
+                    <span class="round-add">
+                        <button id="round-add-dictee" class="main-bg small">
+                            <span>+ Dictee</span>
+                        </button>
+                        <button id="round-add-topo" class="main-bg small">
+                            <span>+ Topo</span>
+                        </button>
+                        <button id="round-add-rekenen" class="main-bg small">
+                            <span>+ Rekenen</span>
+                        </button>
+                        <button id="round-add-circuit" class="main-bg small">
+                            <span>+ Arduino</span>
+                        </button>
+                    </span>
+                </h3>
                 <div>
-                    <div>
-                        <p>
-                            <b>Titel:</b>
-                        </p>
-                        <input id="dictee-title" spellcheck="false" autocomplete="off">
+                    <div class="rounds-layout">
+                        <div id="round-list"></div>
+                        <div id="round-editor"></div>
                     </div>
-                    <div id="dictee-contents-wrapper">
-                        <p>
-                            <b>Tekst:</b>
-                            <em>Woorden tussen {accolades} moeten kandidaten invullen.</em>
-                        </p>
-                        <textarea id="dictee-contents" spellcheck="false"></textarea>
-                    </div>
-                    <p id="dictee-contents-status">De kandidaten moeten in dit dictee 0 antwoorden geven.</p>
+                    <p id="dictee-contents-status">&nbsp;</p>
                     <button id="dictee-save" class="main-bg">
                         <span>Opslaan</span>
                         <img src="/static/icons/save.svg" class="img-r">
@@ -87,6 +95,26 @@
                             <span>Vrijgeven!</span>
                             <img src="/static/icons/arrow-right.svg" alt="Free" class="img-r">
                         </button>
+                        <button id="state-to-ended" class="main-bg small" title="Iedereen moet inleveren, de uitslagen blijven bewaard">
+                            <span>Beëindigen</span>
+                            <img src="/static/icons/check-circle.svg" alt="End" class="img-r">
+                        </button>
+                    </div>
+                    <div id="round-control" style="display: none">
+                        <div class="round-control-info">
+                            <h2>Ronde <span id="live-round-number"></span></h2>
+                            <p id="live-round-title"></p>
+                            <p id="live-round-done"></p>
+                        </div>
+                        <div class="round-control-buttons">
+                            <button id="live-round-prev" class="main-bg small" title="Vorige ronde">
+                                <img src="/static/icons/arrow-right.svg" alt="Vorige ronde" class="img-r rot180">
+                            </button>
+                            <button id="live-round-next" class="main-bg small" title="Volgende ronde">
+                                <span>Volgende</span>
+                                <img src="/static/icons/arrow-right.svg" alt="Volgende ronde" class="img-r">
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <h2>Lichtkrant API</h2>
@@ -115,16 +143,8 @@
             <div class="dialog">
                 <div id="inspector">
                     <h1>Dictee van <span id="comparison-name" class="main-fg"></span></h1>
-                    <div id="comparison">
-                        <div>
-                            <h3>Gegeven antwoorden</h3>
-                            <p id="dictee-given"></p>
-                        </div>
-                        <div>
-                            <h3>Juiste antwoorden</h3>
-                            <p id="dictee-correct"></p>
-                        </div>
-                    </div>
+                    <h4 id="comparison-score"></h4>
+                    <div id="inspector-rounds"></div>
                     <button id="inspector-close" class="main-bg small">
                         <span>Sluiten</span>
                         <img src="/static/icons/x.svg" alt="Close" class="img-r">
@@ -141,6 +161,9 @@
         <script src="/static/js/general.js"></script>
         <script src="/static/js/dialog.js"></script>
         <script src="/static/js/sonner.js"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="/static/js/topo.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@wokwi/elements@1.9.1/dist/wokwi-elements.bundle.min.js"></script>
         <script src="/static/js/examiner.js" type="module"></script>
         <noscript>
             <div class="dialog">
