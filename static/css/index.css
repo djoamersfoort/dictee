@@ -116,9 +116,58 @@ body::backdrop {
         align-items: center;
         margin: var(--spacing) 0;
 
-        .DicteeForm, .DicteeSubmit {
+        #dictee-rounds {
+            display: contents;
+        }
+        .RoundNav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            h3 {
+                margin: 0 var(--spacing);
+                font-size: 1.5em;
+            }
+            button {
+                width: fit-content;
+                padding: 8px 24px;
+            }
+        }
+        .RoundNav, .DicteeForm, .TopoForm, .DicteeSubmit {
             width: 50%;
             min-width: 1000px;
+            margin-bottom: var(--spacing);
+        }
+        .TopoForm {
+            display: flex;
+            flex-direction: column;
+
+            .topo-prompt {
+                display: flex;
+                align-items: baseline;
+                gap: calc(var(--spacing) / 2);
+                margin-top: 0;
+                margin-bottom: 0;
+                font-size: 1.4em;
+
+                .topo-target {
+                    font-size: 1.4em;
+                    font-style: italic;
+                    text-transform: uppercase;
+                }
+                .topo-progress {
+                    margin-left: auto;
+                    font-size: 0.8em;
+                    font-weight: bold;
+                }
+            }
+            .topo-map {
+                height: 65vh;
+                cursor: crosshair;
+            }
+            &.finished .topo-map {
+                cursor: grab;
+            }
         }
         .DicteeForm {
             flex: auto;
@@ -146,6 +195,34 @@ body::backdrop {
                 }
             }
         }
+        .RekenenForm {
+            .rekenen-sums {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: calc(var(--spacing) / 2) calc(var(--spacing) * 2);
+                padding-left: 2.5em;
+                font-size: 1.3em;
+
+                li {
+                    padding-left: 4px;
+
+                    &::marker {
+                        color: var(--gray-color);
+                        font-size: 0.8em;
+                    }
+                }
+                span {
+                    display: inline-block;
+                    min-width: 8em;
+                    font-weight: bold;
+                    font-variant-numeric: tabular-nums;
+                }
+                input {
+                    width: 100px;
+                    font-size: inherit;
+                }
+            }
+        }
         .DicteeSubmit {
             display: flex;
             flex-direction: column;
@@ -164,7 +241,7 @@ body::backdrop {
           "Contents Participants"
           "Contents Dashboard"
           "Footer Footer";
-        grid-template-rows: 0fr 1fr 0fr 0fr;
+        grid-template-rows: 0fr minmax(0, 1fr) 0fr 0fr;
         grid-template-columns: 2fr 1fr;
     }
     &.ErrorPage {
@@ -286,33 +363,300 @@ a {
         animation-delay: 0.3s;
         display: flex;
         flex-direction: column;
+        min-height: 0;
+
+        h3.flex {
+            margin-bottom: 0;
+        }
+        .round-add {
+            display: flex;
+            gap: calc(var(--spacing) / 2);
+            font-style: normal;
+
+            button {
+                width: fit-content;
+                padding: 6px 16px;
+                font-size: 0.5em;
+            }
+        }
+        em {
+            color: var(--gray-color);
+        }
 
         & > div {
             display: flex;
             flex-direction: column;
-            flex-basis: 90%;
+            flex: auto;
+            min-height: 0;
             gap: var(--spacing);
 
-            p {
+            & > p {
                 margin: 0;
+            }
+        }
+        .rounds-layout {
+            display: flex;
+            gap: var(--spacing);
+            flex: auto;
+            min-height: 0;
+        }
+
+        #round-list {
+            flex: 0 0 240px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+
+            .round-item {
                 display: flex;
-                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+                padding: 8px;
+                border-radius: calc(var(--spacing) / 1.5);
+                background-color: var(--grid-card);
+                border: 2px solid transparent;
+                cursor: pointer;
+
+                &.selected {
+                    border-color: var(--main-color);
+                }
+                &.inactive .round-label {
+                    opacity: 0.5;
+                }
+                &.invalid .round-label span {
+                    color: salmon;
+                }
+                input[type="checkbox"] {
+                    width: 18px;
+                    height: 18px;
+                    flex: none;
+                    accent-color: rgb(30, 200, 130);
+                    cursor: pointer;
+                }
             }
-            em {
-                color: var(--gray-color);
+            .round-label {
+                flex: auto;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+
+                b {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                span {
+                    font-size: small;
+                    color: var(--gray-color);
+                }
             }
-            & > div {
+            .round-controls {
+                display: flex;
+                gap: 2px;
+
+                button {
+                    width: 26px;
+                    height: 26px;
+                    padding: 0;
+                    border-radius: 8px;
+                    background: var(--grid-card);
+
+                    &.red-bg {
+                        background: linear-gradient(1deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)), var(--red-gradient-bg);
+                    }
+                    img {
+                        height: 16px;
+                    }
+                    &:not(:disabled):hover img {
+                        transform: none;
+                    }
+                    &.rot-up img {
+                        rotate: -90deg;
+                    }
+                    &.rot-down img {
+                        rotate: 90deg;
+                    }
+                }
+            }
+        }
+        .round-empty {
+            color: var(--gray-color);
+            font-style: italic;
+            text-align: center;
+        }
+
+        #round-editor {
+            flex: auto;
+            min-width: 0;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing) / 1.5);
+
+            .editor-field {
                 display: flex;
                 flex-direction: column;
                 gap: 4px;
 
+                p {
+                    margin: 0;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: var(--spacing);
+                }
+                &.grow {
+                    flex: auto;
 
-                &#dictee-contents-wrapper {
-                    flex-basis: 80%;
+                    textarea {
+                        flex: auto;
+                    }
                 }
+            }
+            .location-search {
+                display: flex;
+                gap: calc(var(--spacing) / 2);
+
+                input {
+                    flex: auto;
+                }
+                button {
+                    width: fit-content;
+                    padding: 0 24px;
+                }
+            }
+            #location-results {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                max-height: 170px;
+                overflow-y: auto;
+                flex: none;
+
+                &:empty {
+                    display: none;
+                }
+                .round-empty {
+                    margin: 0;
+                }
+            }
+            .search-result {
+                display: block;
+                text-align: left;
+                padding: 6px 10px;
+                font-size: 1em;
+                font-style: normal;
+                font-weight: normal;
+                text-transform: none;
+                border-radius: 8px;
+                background: var(--input-background);
+
+                &:not(:disabled):hover {
+                    background: var(--grid-card);
+                }
+                em {
+                    font-size: small;
+                }
+                small {
+                    display: block;
+                    color: var(--gray-color);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+            .rekenen-editor {
+                flex: auto;
+                display: flex;
+                gap: var(--spacing);
+                min-height: 200px;
+
                 textarea {
-                    flex-basis: 90%;
+                    flex: 1;
+                    font-size: 1.1em;
+                    line-height: 1.5;
                 }
+            }
+            .rekenen-preview {
+                flex: 1;
+                margin: 0;
+                padding: calc(var(--spacing) / 2) calc(var(--spacing) / 2) calc(var(--spacing) / 2) 2.5em;
+                background-color: var(--grid-card);
+                border-radius: var(--spacing);
+                overflow-y: auto;
+                font-size: 1.1em;
+                line-height: 1.5;
+                font-variant-numeric: tabular-nums;
+
+                &:empty {
+                    display: none;
+                }
+                li::marker {
+                    color: var(--gray-color);
+                }
+            }
+            .topo-editor-body {
+                flex: auto;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                gap: calc(var(--spacing) / 2);
+            }
+            .location-list {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                max-height: 30%;
+                overflow-y: auto;
+
+                .round-empty {
+                    margin: 0;
+                }
+            }
+            .location-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 4px 8px;
+                border-radius: 8px;
+                background-color: var(--grid-card);
+
+                & > div {
+                    flex: auto;
+                    min-width: 0;
+                    display: flex;
+                    flex-direction: column;
+                }
+                input {
+                    padding: 2px 6px;
+                    border-radius: 6px;
+                    font-weight: bold;
+                }
+                small {
+                    color: var(--gray-color);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                button {
+                    width: 32px;
+                    height: 32px;
+                    flex: none;
+                    padding: 0;
+                    border-radius: 8px;
+
+                    img {
+                        height: 18px;
+                    }
+                    &:not(:disabled):hover img {
+                        transform: none;
+                    }
+                }
+            }
+            .topo-map {
+                flex: auto;
+                min-height: 240px;
             }
         }
     }
@@ -423,6 +767,38 @@ a {
                     font-size: 1.2em;
                     padding-left: 32px;
                     padding-right: 32px;
+                }
+            }
+        }
+        /* status row: stack the state buttons (e.g. "Afsluiten" + "Beëindigen") instead of widening the card */
+        #dashboard-items > div:first-child {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            column-gap: var(--spacing);
+            row-gap: calc(var(--spacing) / 2);
+
+            h2 {
+                grid-row: span 2;
+            }
+            button {
+                width: 100%;
+            }
+        }
+        #round-control {
+            .live-sub {
+                font-size: 0.7em;
+                font-weight: normal;
+            }
+            #live-round-done {
+                font-weight: bold;
+            }
+            .round-control-buttons {
+                gap: calc(var(--spacing) / 2);
+
+                button {
+                    display: flex;
+                    padding-left: 16px;
+                    padding-right: 24px;
                 }
             }
         }
@@ -700,7 +1076,17 @@ button.main-bg {
         }
     }
     #inspector {
-        #comparison {
+        #comparison-score {
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .inspector-round {
+            h3 {
+                text-align: left;
+                margin: var(--spacing) 0;
+            }
+        }
+        .comparison {
             display: flex;
             gap: var(--dialog-spacing);
 
@@ -708,7 +1094,37 @@ button.main-bg {
                 width: 50%;
             }
         }
-        #comparison, button {
+        .inspector-table {
+            border-collapse: collapse;
+            min-width: 50%;
+
+            th, td {
+                text-align: left;
+                padding: 4px 12px 4px 0;
+                border-bottom: 1px solid var(--grid-card);
+            }
+        }
+        .inspector-topo {
+            display: flex;
+            gap: var(--spacing);
+
+            table {
+                flex: 0 0 40%;
+                align-self: flex-start;
+                border-collapse: collapse;
+
+                th, td {
+                    text-align: left;
+                    padding: 4px 8px;
+                    border-bottom: 1px solid var(--grid-card);
+                }
+            }
+            .topo-map {
+                flex: auto;
+                height: 400px;
+            }
+        }
+        #inspector-rounds, button {
             width: calc(100% - var(--dialog-spacing) * 2);
             margin: var(--spacing) var(--dialog-spacing);
         }
@@ -806,4 +1222,52 @@ noscript .dialog {
     & div {
         padding-left: 20px;
     }
+}
+
+/* topo maps (Leaflet) */
+.topo-map {
+    border-radius: var(--spacing);
+    overflow: hidden;
+    background-color: #aad3df;
+    font-family: inherit;
+
+    .leaflet-control-attribution a::after {
+        display: none;
+    }
+}
+.topo-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 3px; /* room for the selection ring */
+
+    .topo-chip {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        font-style: normal;
+        background: var(--grid-card);
+        outline: 2px solid transparent;
+        outline-offset: 3px;
+        transition: outline-color 0.2s ease, opacity 0.2s ease;
+
+        &.answered {
+            background: var(--main-gradient-fg);
+        }
+        &.scored {
+            background: var(--chip-color);
+            color: #0b1f1a;
+            opacity: 0.6;
+        }
+        &.selected {
+            outline-color: var(--main-color);
+            opacity: 1;
+        }
+    }
+}
+.leaflet-tooltip.topo-label {
+    padding: 0 5px;
+    font-weight: bold;
+    font-family: Montserrat, sans-serif;
 }
