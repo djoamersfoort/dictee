@@ -51,6 +51,9 @@
                         <button id="round-add-rekenen" class="main-bg small">
                             <span>+ Rekenen</span>
                         </button>
+                        <button id="round-add-circuit" class="main-bg small">
+                            <span>+ Arduino</span>
+                        </button>
                     </span>
                 </h3>
                 <div>
@@ -98,7 +101,11 @@
                         </button>
                     </div>
                     <div id="round-control" style="display: none">
-                        <h2>Ronde:<br><span id="live-round-title" class="live-sub"></span><br><span id="live-round-done" class="live-sub"></span></h2>
+                        <div class="round-control-info">
+                            <h2>Ronde <span id="live-round-number"></span></h2>
+                            <p id="live-round-title"></p>
+                            <p id="live-round-done"></p>
+                        </div>
                         <div class="round-control-buttons">
                             <button id="live-round-prev" class="main-bg small" title="Vorige ronde">
                                 <img src="/static/icons/arrow-right.svg" alt="Vorige ronde" class="img-r rot180">
@@ -156,6 +163,7 @@
         <script src="/static/js/sonner.js"></script>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script src="/static/js/topo.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@wokwi/elements@1.9.1/dist/wokwi-elements.bundle.min.js"></script>
         <script src="/static/js/examiner.js" type="module"></script>
         <noscript>
             <div class="dialog">

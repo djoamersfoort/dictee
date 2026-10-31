@@ -17,6 +17,8 @@
  */
 
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+import { createCircuitEditor } from "/static/js/circuit-editor.js";
+import { createSimulationPanel } from "/static/js/circuit-sim.js";
 
 const socket = io();
 
@@ -105,6 +107,7 @@ const showRound = (index) => {
     document.getElementById("round-nav-title").textContent =
       `Ronde ${currentRound + 1} van ${roundControllers.length}`;
     roundNav.style.display = (examMode || roundControllers.length > 1) ? "" : "none";
+    roundNav.classList.toggle("exam", examMode);
     roundPrev.style.display = roundNext.style.display = examMode ? "none" : "";
     roundDone.style.display = examMode ? "" : "none";
     roundPrev.disabled = (currentRound === 0);
@@ -291,7 +294,7 @@ const createRekenenRound = (round) => {
     list.className = "rekenen-sums";
     for (const sum of round.sums) {
         const li = document.createElement("li");
-        li.innerHTML = `<span>${htmlsp(sum)} =</span><input inputmode="decimal" spellcheck="false" autocomplete="off">`;
+        li.innerHTML = `<div><span>${htmlsp(sum)} =</span><input inputmode="decimal" spellcheck="false" autocomplete="off"></div>`;
         list.appendChild(li);
     }
     card.appendChild(list);
@@ -324,7 +327,7 @@ const createTopoRound = (round) => {
     const answers = new Array(prompts.length).fill(null);
     const markers = new Array(prompts.length).fill(null);
     const resultLayer = L.layerGroup().addTo(map);
-    let current = 0, keys = null, result = null, pendingFit = null;
+    let current = 0, keys = null, result = null, pendingFit = round.view ? L.latLngBounds(round.view) : null;
 
     const chipButtons = prompts.map((_p, i) => {
         const chip = document.createElement("button");
@@ -439,6 +442,167 @@ const createTopoRound = (round) => {
     };
 };
 
+/**
+ * Arduino circuits: build a circuit with the given parts so the (fixed) code does what the task says.
+ */
+const createCircuitRound = (round) => {
+    const card = createRoundCard("CircuitForm", round.title);
+    const questions = round.questions;
+    let current = 0, results = null, keys = null, showingSolution = false;
+
+    // question navigation: ← previous | Vraag 1 · Vraag 2 · ... | next →
+    const nav = document.createElement("div");
+    nav.className = "cq-nav";
+    const prev = document.createElement("button");
+    prev.className = "main-bg small cq-step";
+    prev.innerHTML = `<img src="/static/icons/arrow-right.svg" alt="" class="img-r rot180"><span>Vorige vraag</span>`;
+    const next = document.createElement("button");
+    next.className = "main-bg small cq-step";
+    next.innerHTML = `<span>Volgende vraag</span><img src="/static/icons/arrow-right.svg" alt="" class="img-r">`;
+    const tabsBox = document.createElement("div");
+    tabsBox.className = "cq-tabs";
+    nav.append(prev, tabsBox, next);
+    card.appendChild(nav);
+    if (questions.length === 1) nav.style.display = "none";
+
+    const tabs = questions.map((_q, i) => {
+        const tab = document.createElement("button");
+        tab.className = "cq-tab";
+        tab.innerHTML = `<span class="cq-tab-mark"></span>Vraag ${i + 1}`;
+        tab.addEventListener("click", () => select(i));
+        tabsBox.appendChild(tab);
+        return tab;
+    });
+    prev.addEventListener("click", () => select(current - 1));
+    next.addEventListener("click", () => select(current + 1));
+
+    const taskBox = document.createElement("div");
+    taskBox.className = "cq-task";
+    taskBox.innerHTML = `<div class="cq-task-head"><span class="cq-task-number"></span><span class="circuit-progress"></span></div><p></p>`;
+    card.appendChild(taskBox);
+
+    const body = document.createElement("div");
+    body.className = "circuit-body";
+    const side = document.createElement("div");
+    side.className = "circuit-side";
+    const codeLabel = document.createElement("h4");
+    codeLabel.textContent = "Code op de Arduino";
+    const code = document.createElement("pre");
+    code.className = "circuit-code";
+    const feedback = document.createElement("div");
+    feedback.className = "circuit-feedback";
+    side.append(codeLabel, code, feedback);
+    const editorArea = document.createElement("div");
+    editorArea.className = "circuit-editor-area";
+    body.append(side, editorArea);
+    card.appendChild(body);
+
+    const help = document.createElement("p");
+    help.className = "circuit-help";
+    help.innerHTML = "<b>Bouwen:</b> sleep onderdelen om ze te verplaatsen. Klik op een onderdeel en dan op ↻ (of druk R) om het te draaien. " +
+      "Sleep van pootje naar pootje (of klik ze allebei aan) voor een draad. Klik op een draad en dan op × om hem weg te halen.";
+    card.appendChild(help);
+
+    // live simulation of the shown circuit, once the results are in
+    const simulation = createSimulationPanel();
+    let simFor = "";
+    const startSim = () => {
+        const e = editors[current];
+        simulation.run((showingSolution && e.solution) ? e.solution : e.editor, questions[current]);
+        simFor = `${current}:${showingSolution}`;
+    };
+
+    const built = (i) => editors[i].editor.getValue().wires.length > 0;
+    const editors = questions.map(q => {
+        const area = document.createElement("div");
+        editorArea.appendChild(area);
+        const onChange = () => {
+            render();
+            validateFormCompletion();
+        };
+        return {area, editor: createCircuitEditor(area, {parts: q.parts, onChange}), solution: null};
+    });
+
+    const render = () => {
+        tabs.forEach((tab, i) => {
+            tab.classList.toggle("selected", i === current);
+            tab.classList.toggle("built", !results && built(i));
+            tab.classList.remove("good", "bad");
+            if (results) tab.classList.add(results.answers[i].score >= 1 ? "good" : "bad");
+            tab.querySelector(".cq-tab-mark").textContent = results ? (results.answers[i].score >= 1 ? "✓" : "✗") : built(i) ? "✓" : "";
+        });
+        prev.disabled = current === 0;
+        next.disabled = current === questions.length - 1;
+
+        editors.forEach((e, i) => {
+            e.area.style.display = (i === current) ? "" : "none";
+            e.editor.element.style.display = (showingSolution && e.solution) ? "none" : "";
+            if (e.solution) e.solution.element.style.display = showingSolution ? "" : "none";
+        });
+
+        taskBox.querySelector(".cq-task-number").textContent =
+          questions.length > 1 ? `Vraag ${current + 1} van ${questions.length}` : "Opdracht";
+        taskBox.querySelector("p").textContent = questions[current].task;
+        code.textContent = questions[current].code;
+
+        const progress = taskBox.querySelector(".circuit-progress");
+        if (!results) {
+            const count = editors.filter((_e, i) => built(i)).length;
+            progress.className = "circuit-progress";
+            progress.textContent = questions.length > 1 ? `${count} van ${questions.length} vragen gebouwd` : "";
+            feedback.innerHTML = "";
+            return;
+        }
+
+        const r = results.answers[current];
+        progress.className = `circuit-progress ${topo.scoreClass(r.score)}`;
+        progress.textContent = r.score >= 1 ? "werkt! — 1 punt" : "werkt niet — 0 punten";
+        feedback.innerHTML = `<h4>Tests</h4><ul class="circuit-tests">${r.tests.map(t =>
+          `<li class="${t.passed ? "passed" : "failed"}"><b>${t.passed ? "✓" : "✗"} ${htmlsp(t.name)}</b>` +
+          `${t.passed ? "" : `<span>${htmlsp(t.message)}</span>`}</li>`).join("")}</ul>`;
+
+        if (keys?.[current]?.solution) {
+            const toggle = document.createElement("button");
+            toggle.className = "main-bg small";
+            toggle.innerHTML = `<span>${showingSolution ? "Laat mijn schakeling zien" : "Laat een goede oplossing zien"}</span>`;
+            toggle.addEventListener("click", () => {
+                showingSolution = !showingSolution;
+                const e = editors[current];
+                e.solution ??= createCircuitEditor(e.area, {parts: questions[current].parts, value: keys[current].solution, readOnly: true});
+                render();
+            });
+            feedback.appendChild(toggle);
+        }
+
+        feedback.appendChild(simulation.element);
+        if (simFor !== `${current}:${showingSolution}`) startSim();
+    };
+
+    const select = (i) => {
+        current = Math.max(0, Math.min(questions.length - 1, i));
+        showingSolution = false;
+        render();
+    };
+
+    render();
+
+    return {
+        card,
+        total: questions.length,
+        getAnswers: () => editors.map(e => e.editor.getValue()),
+        filledCount: () => editors.filter((_e, i) => built(i)).length,
+        isComplete: () => editors.every((_e, i) => built(i)),
+        refresh: render,
+        showResults(answerKeys, roundResult) {
+            keys = answerKeys;
+            results = roundResult;
+            editors.forEach(e => e.editor.setReadOnly(true));
+            card.classList.add("finished");
+            select(0);
+        }
+    };
+};
+
 // Results
 document.getElementById("view-results").addEventListener("click", () => {
     showRound(0);
@@ -498,7 +662,7 @@ socket.on("force-quit", (reason) => {
 
 socket.on("dictee-start", (rounds, startRound) => {
     [...roundsContainer.children].forEach(c => c.remove());
-    const creators = {dictee: createDicteeRound, topo: createTopoRound, rekenen: createRekenenRound};
+    const creators = {dictee: createDicteeRound, topo: createTopoRound, rekenen: createRekenenRound, circuit: createCircuitRound};
     roundControllers = rounds.map(r => creators[r.type](r));
 
     document.getElementById("dictee-submit").classList.remove("return-to-main");

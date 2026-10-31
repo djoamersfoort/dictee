@@ -21,6 +21,7 @@ import { join } from "path";
 
 import { version } from "../package.json" with {type: "json"};
 import { evaluateSum, sumLines, formatNumber } from "../static/js/calc.js";
+import { sanitizeQuestion, validateQuestion, type CircuitQuestion } from "../static/js/circuit.js";
 
 
 export type LatLng = {lat: number, lng: number};
@@ -43,21 +44,28 @@ export type TopoRound = {
 };
 /** Mental arithmetic: one sum per line in `text`, the answers are calculated automatically. */
 export type RekenenRound = {id: string, type: "rekenen", title: string, active: boolean, text: string};
-export type Round = DicteeRound | TopoRound | RekenenRound;
+/** Arduino circuits: build a circuit in a drag and drop editor, graded by simulation (see static/js/circuit.js). */
+export type CircuitRound = {id: string, type: "circuit", title: string, active: boolean, questions: CircuitQuestion[]};
+export type Round = DicteeRound | TopoRound | RekenenRound | CircuitRound;
 export type RoundType = Round["type"];
 
 /** The part of a round participants are allowed to see before submitting. */
 export type ParticipantRound =
     {type: "dictee", title: string, text: string} |
     {type: "topo", title: string, prompts: string[], view: [[number, number], [number, number]]} |
-    {type: "rekenen", title: string, sums: string[]};
+    {type: "rekenen", title: string, sums: string[]} |
+    {type: "circuit", title: string, questions: Pick<CircuitQuestion, "task" | "code" | "parts">[]};
 
 export type DicteeRoundResult = {type: "dictee" | "rekenen", roundID: string, answers: {given: string, correct: boolean}[]};
 export type TopoRoundResult = {
     type: "topo", roundID: string,
     answers: {given: LatLng | null, distanceKm: number | null, score: number, nearest: LatLng | null}[]
 };
-export type RoundResult = DicteeRoundResult | TopoRoundResult;
+export type CircuitRoundResult = {
+    type: "circuit", roundID: string,
+    answers: {given: unknown, score: number, tests: {name: string, passed: boolean, message: string}[]}[]
+};
+export type RoundResult = DicteeRoundResult | TopoRoundResult | CircuitRoundResult;
 
 export const roundsFile = join(import.meta.dirname, "..", "data", "rounds.json");
 const legacyContentsFile = join(import.meta.dirname, "..", "data", "contents.txt");
@@ -138,6 +146,9 @@ export const sanitizeRounds = (input: unknown): Round[] => {
 
         if (r.type === "dictee" || r.type === "rekenen") {
             rounds.push({id, type: r.type, title, active, text: String(r.text ?? "").trimEnd()});
+        } else if (r.type === "circuit") {
+            const questions = (Array.isArray(r.questions) ? r.questions.slice(0, 20) : []).map(sanitizeQuestion);
+            rounds.push({id, type: "circuit", title, active, questions});
         } else if (r.type === "topo") {
             const locations: TopoLocation[] = [];
             for (const l of Array.isArray(r.locations) ? r.locations : []) {
@@ -176,6 +187,12 @@ export const validateRound = (round: Round): string | null => {
         const close = (round.text.match(/\}/g) ?? []).length;
         if (open !== close || /\{\s*\}/.test(round.text)) return "je syntax is niet helemaal lekker";
         if (dicteeAnswerKeys(round.text).length === 0) return "er zijn geen in te vullen woorden";
+    } else if (round.type === "circuit") {
+        if (round.questions.length === 0) return "er zijn geen vragen";
+        for (const [i, q] of round.questions.entries()) {
+            const problem = validateQuestion(q);
+            if (problem) return `bij vraag ${i + 1} ${problem}`;
+        }
     } else if (round.type === "rekenen") {
         const lines = sumLines(round.text);
         if (lines.length === 0) return "er zijn geen sommen";
@@ -200,12 +217,14 @@ export const rekenenSums = (text: string) => sumLines(text).map(line => evaluate
 export const roundMaxPoints = (round: Round) =>
     round.type === "dictee" ? dicteeAnswerKeys(round.text).length :
     round.type === "rekenen" ? sumLines(round.text).length :
+    round.type === "circuit" ? round.questions.length :
     round.locations.length;
 
 /** Strip everything participants should not see (answers, geometry). */
 export const toParticipantRound = (round: Round): ParticipantRound =>
     round.type === "dictee" ? {type: "dictee", title: round.title, text: round.text.replaceAll(formInput, "{}")} :
     round.type === "rekenen" ? {type: "rekenen", title: round.title, sums: rekenenSums(round.text).map(s => s.display)} :
+    round.type === "circuit" ? {type: "circuit", title: round.title, questions: round.questions.map(q => ({task: q.task, code: q.code, parts: q.parts}))} :
     {type: "topo", title: round.title, prompts: round.locations.map(l => l.name), view: topoView(round)};
 
 /**
@@ -225,6 +244,7 @@ const topoView = (round: TopoRound): [[number, number], [number, number]] => {
 export const toAnswerKeys = (round: Round) =>
     round.type === "dictee" ? dicteeAnswerKeys(round.text) :
     round.type === "rekenen" ? rekenenSums(round.text).map(s => formatNumber(s.value)) :
+    round.type === "circuit" ? round.questions.map(q => ({solution: q.solution})) :
     round.locations.map(l => ({name: l.name, lat: l.lat, lng: l.lng, geometry: l.geometry}));
 
 

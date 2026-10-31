@@ -79,6 +79,7 @@
                     <li>Vul de weggelaten woorden in die de examinator uitspreekt.</li>
                     <li>Bij een topografieronde klik je op de kaart de gevraagde plaatsen aan.</li>
                     <li>Bij een rekenronde reken je de sommen uit en vul je de antwoorden in.</li>
+                    <li>Bij een Arduino-ronde bouw je met de gegeven onderdelen een schakeling die doet wat er gevraagd wordt.</li>
                     <li>Zodra je alles hebt ingevuld, klik je op "Inleveren!".</li>
                     <li>Je krijgt direct de uitslag.</li>
                 </ol>
@@ -216,7 +217,8 @@
                                 <li>correcte plaatsing van leestekens en trema's;</li>
                                 <li>correcte wijze van getallen uitschrijven;</li>
                                 <li>bij topografierondes: het nauwkeurig aanwijzen van de gevraagde locaties op de kaart;</li>
-                                <li>bij rekenrondes: het juist uitrekenen van de sommen.</li>
+                                <li>bij rekenrondes: het juist uitrekenen van de sommen;</li>
+                                <li>bij Arduino-rondes: het bouwen van een werkende en veilige schakeling.</li>
                             </ol>
                         </ol>
                         <h4>4. Rechten van kandidaten</h4>
@@ -254,6 +256,7 @@
                                 <ol>
                                     <li>dicteeronde: één punt per juist ingevuld woord;</li>
                                     <li>rekenronde: één punt per juist uitgerekende som;</li>
+                                    <li>Arduino-ronde: één punt per schakeling die alle automatische tests doorstaat;</li>
                                     <li>topografieronde: één punt per locatie die binnen de grenzen van de gevraagde plaats of het gevraagde gebied wordt aangeklikt,
                                           en een evenredig lager aantal punten naarmate de klik verder buiten deze grenzen ligt.</li>
                                 </ol>
@@ -394,6 +397,7 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
         <script src="/static/js/topo.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@wokwi/elements@1.9.1/dist/wokwi-elements.bundle.min.js"></script>
         <script src="/static/js/index.js" type="module"></script>
         <noscript>
             <div class="dialog">

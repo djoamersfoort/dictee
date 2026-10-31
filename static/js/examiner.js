@@ -18,6 +18,9 @@
 
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 import { evaluateSum, sumLines, formatNumber } from "/static/js/calc.js";
+import { PART_TYPES, LED_COLORS, sanitizeQuestion, validateQuestion, gradeCircuit, sanitizeCircuit, partLabel, newQuestionID } from "/static/js/circuit.js";
+import { createCircuitEditor } from "/static/js/circuit-editor.js";
+import { createSimulationPanel } from "/static/js/circuit-sim.js";
 
 const socket = io();
 
@@ -32,6 +35,7 @@ const statusText = document.getElementById("dictee-contents-status");
 const addDicteeButton = document.getElementById("round-add-dictee");
 const addTopoButton = document.getElementById("round-add-topo");
 const addRekenenButton = document.getElementById("round-add-rekenen");
+const addCircuitButton = document.getElementById("round-add-circuit");
 
 /** Rounds as edited on this page, possibly unsaved. */
 let rounds = [];
@@ -45,12 +49,13 @@ let editorMap = null;
 let latestSearch = "";
 
 const newID = () => Math.random().toString(36).slice(2, 10);
-const typeNames = {dictee: "Dictee", topo: "Topo", rekenen: "Rekenen"};
+const typeNames = {dictee: "Dictee", topo: "Topo", rekenen: "Rekenen", circuit: "Arduino"};
 
 const dicteeAnswerKeys = text => (text.match(/\{(.*?)\}/g) ?? []).map(a => a.slice(1, -1));
 const roundPoints = r =>
   r.type === "dictee" ? dicteeAnswerKeys(r.text).length :
   r.type === "rekenen" ? sumLines(r.text).length :
+  r.type === "circuit" ? r.questions.length :
   r.locations.length;
 
 // keep in sync with `validateRound` in app/rounds.ts
@@ -62,6 +67,12 @@ const validateRound = (r) => {
         const close = (r.text.match(/\}/g) ?? []).length;
         if (open !== close || /\{\s*\}/.test(r.text)) return "je syntax is niet helemaal lekker";
         if (dicteeAnswerKeys(r.text).length === 0) return "er zijn geen in te vullen woorden";
+    } else if (r.type === "circuit") {
+        if (r.questions.length === 0) return "er zijn geen vragen";
+        for (const [i, q] of r.questions.entries()) {
+            const problem = validateQuestionCached(q);
+            if (problem) return `bij vraag ${i + 1} ${problem}`;
+        }
     } else if (r.type === "rekenen") {
         const lines = sumLines(r.text);
         if (lines.length === 0) return "er zijn geen sommen";
@@ -79,6 +90,17 @@ const validateRound = (r) => {
     return null;
 };
 
+// validating runs the model answer through the simulator, so remember the outcome per question content
+const validationCache = new Map();
+const validateQuestionCached = (q) => {
+    const key = JSON.stringify(q);
+    if (!validationCache.has(key)) {
+        if (validationCache.size > 200) validationCache.clear();
+        validationCache.set(key, validateQuestion(sanitizeQuestion(q)));
+    }
+    return validationCache.get(key);
+};
+
 const saveRounds = () => {
     savePending = true;
     socket.emit("examiner-rounds-update", rounds);
@@ -87,9 +109,9 @@ saveButton.addEventListener("click", saveRounds);
 
 const updateStatus = () => {
     const disableControls = !editable;
-    addDicteeButton.disabled = addTopoButton.disabled = addRekenenButton.disabled = disableControls;
+    addDicteeButton.disabled = addTopoButton.disabled = addRekenenButton.disabled = addCircuitButton.disabled = disableControls;
     roundList.querySelectorAll("input, button").forEach(el => el.disabled = disableControls);
-    roundEditor.querySelectorAll("input, textarea, button:not(.keep-enabled)").forEach(el => el.disabled = disableControls);
+    roundEditor.querySelectorAll("input, textarea, select, button:not(.keep-enabled)").forEach(el => el.disabled = disableControls);
 
     if (!editable) {
         statusText.textContent = "Sluit het dictee af om de rondes te kunnen bewerken.";
@@ -192,8 +214,8 @@ const renderList = () => {
 };
 
 const addRound = (type) => {
-    const round = type === "topo" ?
-      {id: newID(), type, title: "", active: true, maxDistanceKm: 250, locations: []} :
+    const round = type === "topo" ? {id: newID(), type, title: "", active: true, maxDistanceKm: 250, locations: []} :
+      type === "circuit" ? {id: newID(), type, title: "", active: true, questions: [newCircuitQuestion()]} :
       {id: newID(), type, title: "", active: true, text: ""};
     rounds.push(round);
     selectedID = round.id;
@@ -204,6 +226,7 @@ const addRound = (type) => {
 addDicteeButton.addEventListener("click", () => addRound("dictee"));
 addTopoButton.addEventListener("click", () => addRound("topo"));
 addRekenenButton.addEventListener("click", () => addRound("rekenen"));
+addCircuitButton.addEventListener("click", () => addRound("circuit"));
 
 const field = (labelHTML, element) => {
     const wrapper = document.createElement("div");
@@ -242,6 +265,7 @@ const renderEditor = () => {
 
     if (round.type === "dictee") renderDicteeEditor(round);
     else if (round.type === "rekenen") renderRekenenEditor(round);
+    else if (round.type === "circuit") renderCircuitRoundEditor(round);
     else renderTopoEditor(round);
     updateStatus();
 };
@@ -299,6 +323,450 @@ const renderRekenenEditor = (round) => {
     );
     wrapper.classList.add("grow");
     roundEditor.appendChild(wrapper);
+};
+
+const newCircuitQuestion = () => ({
+    id: newQuestionID(),
+    task: "",
+    code: "void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrite(13, HIGH);\n}\n\nvoid loop() {\n}",
+    parts: [{id: "LED1", type: "led", color: "rood"}, {id: "R1", type: "resistor", value: 220}],
+    tests: [{name: "LED1 brandt", at: 100, inputs: {}, expect: {LED1: true}}],
+    solution: {positions: {}, wires: []}
+});
+
+let circuitQuestionIndex = 0;
+/** The model answer editor currently shown, if any. */
+let solutionEditor = null;
+/** The full screen question editor, if open: re-renders it (e.g. when the dictee state changes). */
+let circuitModal = null;
+
+/**
+ * Overview of the questions in the round editor; each question is edited (or viewed) in a full screen editor.
+ */
+const renderCircuitRoundEditor = (round) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "circuit-round-editor";
+    roundEditor.appendChild(wrapper);
+
+    const list = document.createElement("div");
+    list.className = "cq-list";
+    round.questions.forEach((q, i) => {
+        const problem = validateQuestionCached(q);
+        const item = document.createElement("div");
+        item.className = `cq-item ${problem ? "invalid" : ""}`;
+        const outputs = q.parts.filter(p => PART_TYPES[p.type].output).length;
+        item.innerHTML = `
+          <div class="cq-item-number">${i + 1}</div>
+          <div class="cq-item-info">
+            <b></b>
+            <span class="cq-item-meta">${q.parts.length} onderdelen · ${q.tests.length} ${q.tests.length === 1 ? "test" : "tests"} · ${outputs} uitgang${outputs === 1 ? "" : "en"}</span>
+            <span class="cq-item-status ${problem ? "red-fg" : "green-fg"}"></span>
+          </div>
+          <div class="cq-item-buttons"></div>`;
+        item.querySelector("b").textContent = q.task || "Nog geen opdracht";
+        item.querySelector(".cq-item-status").textContent = problem ? `⚠ ${problem}` : "✓ Voorbeeldoplossing haalt alle tests";
+
+        const buttons = item.querySelector(".cq-item-buttons");
+        const open = document.createElement("button");
+        open.className = "main-bg small keep-enabled";
+        open.innerHTML = `<span>${editable ? "Bewerken" : "Bekijken"}</span>`;
+        open.addEventListener("click", () => openCircuitModal(round, i));
+        buttons.appendChild(open);
+
+        const move = (to) => {
+            round.questions.splice(to, 0, ...round.questions.splice(i, 1));
+            markDirty();
+            renderEditor();
+        };
+        const small = (icon, title, disabled, action, cls = "") => {
+            const b = document.createElement("button");
+            b.className = `small icon ${cls}`;
+            b.title = title;
+            b.disabled = disabled;
+            b.innerHTML = `<img src="/static/icons/${icon}.svg" alt="${title}">`;
+            b.addEventListener("click", () => action(b));
+            buttons.appendChild(b);
+        };
+        small("arrow-right", "Omhoog", i === 0, () => move(i - 1), "rot-up");
+        small("arrow-right", "Omlaag", i === round.questions.length - 1, () => move(i + 1), "rot-down");
+        small("x", "Vraag verwijderen", round.questions.length <= 1, (b) => {
+            if (!b.classList.contains("confirm-warning")) return b.classList.add("confirm-warning");
+            round.questions.splice(i, 1);
+            markDirty();
+            renderEditor();
+        }, "red-bg");
+
+        item.addEventListener("dblclick", e => {
+            if (!e.target.closest("button")) openCircuitModal(round, i);
+        });
+        list.appendChild(item);
+    });
+    wrapper.appendChild(list);
+
+    const add = document.createElement("button");
+    add.className = "main-bg small cq-add";
+    add.innerHTML = "<span>+ Vraag toevoegen</span>";
+    add.addEventListener("click", () => {
+        round.questions.push(newCircuitQuestion());
+        markDirty();
+        renderEditor();
+        openCircuitModal(round, round.questions.length - 1);
+    });
+    wrapper.appendChild(add);
+    updateStatus();
+};
+
+const openCircuitModal = (round, index) => {
+    closeCircuitModal();
+    circuitQuestionIndex = index;
+
+    const modal = document.createElement("div");
+    modal.className = "cq-modal";
+    modal.innerHTML = `
+      <div class="cq-window">
+        <header class="cq-header">
+          <div class="cq-title"><h2></h2><span class="cq-mode"></span></div>
+          <div class="cq-nav">
+            <button class="main-bg small cq-step cq-prev"><img src="/static/icons/arrow-right.svg" alt="" class="img-r rot180"><span>Vorige</span></button>
+            <div class="cq-tabs"></div>
+            <button class="main-bg small cq-step cq-next"><span>Volgende</span><img src="/static/icons/arrow-right.svg" alt="" class="img-r"></button>
+          </div>
+          <button class="cq-close" title="Sluiten (Esc)"><img src="/static/icons/x.svg" alt="Sluiten"></button>
+        </header>
+        <div class="cq-body">
+          <div class="cq-form"></div>
+          <div class="cq-preview"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    document.body.style.overflow = "hidden";
+    modal.querySelector(".cq-close").addEventListener("click", closeCircuitModal);
+    modal.addEventListener("pointerdown", e => {
+        if (e.target === modal) closeCircuitModal();
+    });
+
+    const render = () => {
+        circuitQuestionIndex = Math.min(circuitQuestionIndex, round.questions.length - 1);
+        const q = round.questions[circuitQuestionIndex];
+        modal.querySelector(".cq-title h2").textContent = round.title || "Arduino-ronde";
+        modal.querySelector(".cq-mode").textContent = editable ? "" : "Alleen bekijken: sluit het dictee af om te bewerken";
+
+        const tabs = modal.querySelector(".cq-tabs");
+        tabs.innerHTML = "";
+        round.questions.forEach((question, i) => {
+            const tab = document.createElement("button");
+            const problem = validateQuestionCached(question);
+            tab.className = `cq-tab ${i === circuitQuestionIndex ? "selected" : ""} ${problem ? "bad" : "good"}`;
+            tab.innerHTML = `<span class="cq-tab-mark">${problem ? "!" : "✓"}</span>Vraag ${i + 1}`;
+            tab.title = problem ?? question.task;
+            tab.addEventListener("click", () => {
+                circuitQuestionIndex = i;
+                render();
+            });
+            tabs.appendChild(tab);
+        });
+        modal.querySelector(".cq-prev").disabled = circuitQuestionIndex === 0;
+        modal.querySelector(".cq-next").disabled = circuitQuestionIndex === round.questions.length - 1;
+        modal.querySelector(".cq-prev").onclick = () => { circuitQuestionIndex--; render(); };
+        modal.querySelector(".cq-next").onclick = () => { circuitQuestionIndex++; render(); };
+
+        const form = modal.querySelector(".cq-form"), preview = modal.querySelector(".cq-preview");
+        const scroll = form.scrollTop;
+        form.innerHTML = "";
+        preview.innerHTML = "";
+        renderCircuitQuestion(q, form, render, preview, () => {
+            // keep the tab marks in sync with the live check
+            const tab = tabs.children[circuitQuestionIndex];
+            const problem = validateQuestionCached(q);
+            tab.className = `cq-tab selected ${problem ? "bad" : "good"}`;
+            tab.querySelector(".cq-tab-mark").textContent = problem ? "!" : "✓";
+        });
+        form.scrollTop = scroll;
+    };
+    circuitModal = {element: modal, render};
+    render();
+};
+
+const closeCircuitModal = () => {
+    if (!circuitModal) return;
+    circuitModal.element.remove();
+    circuitModal = null;
+    solutionEditor = null;
+    document.body.style.overflow = "";
+    renderEditor(); // refresh the overview
+};
+
+const renderCircuitQuestion = (q, wrapper, renderAll, preview = wrapper, onCheck = () => {}) => {
+    const status = document.createElement("div");
+    status.className = "circuit-check";
+    const check = () => {
+        const problem = validateQuestionCached(q);
+        status.className = `circuit-check ${problem ? "red-fg" : "green-fg"}`;
+        status.textContent = problem ? `Let op: ${problem}.` : "✓ De voorbeeldoplossing haalt alle tests.";
+        onCheck();
+    };
+    let checkTimeout = null;
+    const changed = () => {
+        markDirty();
+        clearTimeout(checkTimeout);
+        checkTimeout = setTimeout(check, 250);
+    };
+
+    // task
+    const task = document.createElement("textarea");
+    task.rows = 3;
+    task.value = q.task;
+    task.addEventListener("input", () => {
+        q.task = task.value;
+        changed();
+    });
+    wrapper.appendChild(field("<b>Opdracht:</b> <em>Wat moet de schakeling doen? Dit zien de kandidaten.</em>", task));
+
+    // code
+    const code = document.createElement("textarea");
+    code.className = "code-input";
+    code.rows = 10;
+    code.spellcheck = false;
+    code.value = q.code;
+    code.addEventListener("input", () => {
+        q.code = code.value;
+        changed();
+    });
+    code.addEventListener("keydown", e => {
+        if (e.key !== "Tab") return;
+        e.preventDefault();
+        code.setRangeText("  ", code.selectionStart, code.selectionEnd, "end");
+        q.code = code.value;
+        changed();
+    });
+    wrapper.appendChild(field("<b>Arduino-code:</b> <em>Vaste code op de Nano (C++), kandidaten kunnen hem niet aanpassen.</em>", code));
+
+    // parts
+    const partsBox = document.createElement("div");
+    partsBox.className = "circuit-parts";
+    q.parts.forEach((p, i) => {
+        const row = document.createElement("div");
+        row.className = "circuit-part-row";
+
+        const id = document.createElement("input");
+        id.value = p.id;
+        id.className = "part-id";
+        id.addEventListener("change", () => {
+            const to = id.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+            renamePart(q, p.id, to);
+            markDirty();
+            renderAll();
+        });
+        const type = document.createElement("span");
+        type.textContent = PART_TYPES[p.type].name;
+
+        row.append(id, type);
+        if (p.type === "resistor") {
+            const value = document.createElement("input");
+            value.type = "number";
+            value.min = "1";
+            value.value = p.value;
+            value.title = "Weerstand in ohm";
+            value.addEventListener("input", () => {
+                if (+value.value > 0) p.value = +value.value;
+                changed();
+            });
+            row.append(value, document.createTextNode("Ω"));
+        }
+        if (p.type === "led") {
+            const color = document.createElement("select");
+            for (const c of Object.keys(LED_COLORS)) color.add(new Option(c, c, false, c === p.color));
+            color.addEventListener("change", () => {
+                p.color = color.value;
+                markDirty();
+                renderAll();
+            });
+            row.appendChild(color);
+        }
+        const remove = document.createElement("button");
+        remove.className = "red-bg small icon";
+        remove.title = "Onderdeel verwijderen";
+        remove.innerHTML = `<img src="/static/icons/x.svg" alt="Verwijderen">`;
+        remove.addEventListener("click", () => {
+            q.parts.splice(i, 1);
+            renamePart(q, p.id, null);
+            markDirty();
+            renderAll();
+        });
+        row.appendChild(remove);
+        partsBox.appendChild(row);
+    });
+    const addRow = document.createElement("div");
+    addRow.className = "circuit-part-row";
+    const addType = document.createElement("select");
+    for (const [type, def] of Object.entries(PART_TYPES)) addType.add(new Option(def.name, type));
+    const addPart = document.createElement("button");
+    addPart.className = "main-bg small";
+    addPart.innerHTML = "<span>+ Onderdeel</span>";
+    addPart.addEventListener("click", () => {
+        const def = PART_TYPES[addType.value];
+        let n = 1;
+        while (q.parts.some(p => p.id === `${def.prefix}${n}`)) n++;
+        const part = {id: `${def.prefix}${n}`, type: addType.value};
+        if (part.type === "resistor") part.value = 220;
+        if (part.type === "led") part.color = "rood";
+        q.parts.push(part);
+        markDirty();
+        renderAll();
+    });
+    addRow.append(addType, addPart);
+    partsBox.appendChild(addRow);
+    wrapper.appendChild(field("<b>Onderdelen:</b> <em>Deze krijgen kandidaten om mee te bouwen (extra onderdelen als afleiding mag).</em>", partsBox));
+
+    // tests
+    const buttons = q.parts.filter(p => PART_TYPES[p.type].input);
+    const outputs = q.parts.filter(p => PART_TYPES[p.type].output);
+    const testsBox = document.createElement("div");
+    testsBox.className = "circuit-tests-editor";
+    q.tests.forEach((t, i) => {
+        const row = document.createElement("div");
+        row.className = "circuit-test-row";
+
+        const name = document.createElement("input");
+        name.value = t.name;
+        name.placeholder = "Naam van de test";
+        name.addEventListener("input", () => {
+            t.name = name.value;
+            changed();
+        });
+        const at = document.createElement("input");
+        at.type = "number";
+        at.min = "1";
+        at.value = t.at;
+        at.title = "Moment van controleren, in milliseconden na het starten";
+        at.addEventListener("input", () => {
+            if (+at.value > 0) t.at = +at.value;
+            changed();
+        });
+        row.append(name, at, document.createTextNode("ms"));
+
+        if (buttons.length) {
+            const pressed = document.createElement("span");
+            pressed.className = "test-group";
+            pressed.textContent = "Ingedrukt:";
+            for (const b of buttons) {
+                const label = document.createElement("label");
+                const box = document.createElement("input");
+                box.type = "checkbox";
+                box.checked = !!t.inputs[b.id];
+                box.addEventListener("change", () => {
+                    if (box.checked) t.inputs[b.id] = true;
+                    else delete t.inputs[b.id];
+                    changed();
+                });
+                label.append(box, ` ${b.id}`);
+                pressed.appendChild(label);
+            }
+            row.appendChild(pressed);
+        }
+
+        const expect = document.createElement("span");
+        expect.className = "test-group";
+        expect.textContent = "Verwacht:";
+        for (const o of outputs) {
+            const label = document.createElement("label");
+            const select = document.createElement("select");
+            for (const [v, text] of [["", "—"], ["true", "aan"], ["false", "uit"]])
+                select.add(new Option(text, v, false, String(t.expect[o.id] ?? "") === v));
+            select.addEventListener("change", () => {
+                if (select.value === "") delete t.expect[o.id];
+                else t.expect[o.id] = select.value === "true";
+                changed();
+            });
+            label.append(`${o.id} `, select);
+            expect.appendChild(label);
+        }
+        row.appendChild(expect);
+
+        const remove = document.createElement("button");
+        remove.className = "red-bg small icon";
+        remove.title = "Test verwijderen";
+        remove.innerHTML = `<img src="/static/icons/x.svg" alt="Verwijderen">`;
+        remove.addEventListener("click", () => {
+            q.tests.splice(i, 1);
+            markDirty();
+            renderAll();
+        });
+        row.appendChild(remove);
+        testsBox.appendChild(row);
+    });
+    const addTest = document.createElement("button");
+    addTest.className = "main-bg small";
+    addTest.innerHTML = "<span>+ Test</span>";
+    addTest.addEventListener("click", () => {
+        q.tests.push({name: `Test ${q.tests.length + 1}`, at: 100, inputs: {}, expect: {}});
+        markDirty();
+        renderAll();
+    });
+    testsBox.appendChild(addTest);
+    wrapper.appendChild(field("<b>Tests:</b> <em>Per test: welke knoppen ingedrukt zijn en wat er na zoveel ms aan of uit moet zijn. " +
+      "Alle tests goed = 1 punt.</em>", testsBox));
+
+    // model answer
+    const solutionArea = document.createElement("div");
+    solutionArea.className = "circuit-solution";
+    preview.appendChild(field("<b>Voorbeeldoplossing</b> <em>Bouw een werkende schakeling; daarmee wordt de vraag gecontroleerd.</em>", solutionArea));
+    solutionEditor = createCircuitEditor(solutionArea, {
+        parts: q.parts,
+        value: q.solution,
+        readOnly: !editable,
+        onChange: (v) => {
+            q.solution = v;
+            changed();
+        }
+    });
+    const editor = solutionEditor;
+    preview.appendChild(status);
+    check();
+
+    // simulate the model answer; the editor is read-only while simulating, so buttons can be pressed
+    const simulation = createSimulationPanel({title: "Simulatie van de voorbeeldoplossing"});
+    const simToggle = document.createElement("button");
+    simToggle.className = "main-bg small sim-start keep-enabled";
+    const setSimulating = (on) => {
+        if (on) {
+            editor.setReadOnly(true);
+            simToggle.after(simulation.element);
+            simulation.run(editor, q);
+        } else {
+            simulation.stop();
+            simulation.element.remove();
+            editor.setReadOnly(!editable);
+        }
+        simToggle.innerHTML = `<span>${on ? "■ Stoppen met simuleren" : "▶ Simuleren"}</span>`;
+        simToggle.classList.toggle("red-bg", on);
+        simToggle.classList.toggle("main-bg", !on);
+    };
+    simToggle.addEventListener("click", () => setSimulating(!simulation.running));
+    preview.appendChild(simToggle);
+    setSimulating(false);
+
+    if (!editable) wrapper.querySelectorAll("input, textarea, select, button:not(.keep-enabled)").forEach(el => el.disabled = true);
+};
+
+/** Rename (or with `to` = null: remove) a part in the tests and model answer of a question. */
+const renamePart = (q, from, to) => {
+    if (from === to) return;
+    for (const t of q.tests) {
+        for (const map of [t.inputs, t.expect]) {
+            if (!(from in map)) continue;
+            if (to) map[to] = map[from];
+            delete map[from];
+        }
+    }
+    const part = q.parts.find(p => p.id === from);
+    if (part && to) part.id = to;
+    const rewrite = (key) => key.startsWith(`${from}.`) ? (to ? `${to}${key.slice(from.length)}` : null) : key;
+    q.solution.wires = q.solution.wires.map(w => w.map(rewrite)).filter(w => w[0] && w[1]);
+    if (q.solution.positions[from]) {
+        if (to) q.solution.positions[to] = q.solution.positions[from];
+        delete q.solution.positions[from];
+    }
 };
 
 const renderTopoEditor = (round) => {
@@ -364,7 +832,9 @@ const renderTopoEditor = (round) => {
     const map = editorMap = topo.createMap(mapElement, true);
     const locationLayers = L.layerGroup().addTo(map);
     const previewLayer = L.layerGroup().addTo(map);
-    setTimeout(() => map.invalidateSize(), 0);
+    setTimeout(() => {
+        if (editorMap === map) map.invalidateSize(); // the editor may have been re-rendered meanwhile
+    }, 0);
 
     const focus = (location) => {
         const bounds = topo.geometryLayer(location.geometry).getBounds();
@@ -434,7 +904,7 @@ const renderTopoEditor = (round) => {
     renderLocations();
 
     const centers = L.latLngBounds(round.locations.map(l => [l.lat, l.lng]));
-    if (centers.isValid()) map.fitBounds(centers, {padding: [40, 40], maxZoom: 6});
+    if (centers.isValid()) map.fitBounds(centers, {padding: [40, 40], maxZoom: 6, animate: false});
 
     // called by the search reply handler
     roundEditor.showSearchResults = (found, err) => {
@@ -496,6 +966,12 @@ socket.on("examiner-rounds", (r) => {
     if (!rounds.some(x => x.id === selectedID)) selectedID = rounds[0]?.id ?? null;
     renderList();
     renderEditor();
+    if (circuitModal) { // reconnect the open question editor to the saved data
+        const round = rounds.find(x => x.id === selectedID && x.type === "circuit");
+        const index = circuitQuestionIndex;
+        closeCircuitModal();
+        if (round) openCircuitModal(round, index);
+    }
 });
 
 socket.on("examiner-rounds-update-reply", (err) => {
@@ -510,6 +986,8 @@ const setEditable = (to) => {
     if (editable === to) return;
     editable = to;
     renderList();
+    renderEditor();
+    circuitModal?.render();
 };
 
 // Participants
@@ -562,6 +1040,36 @@ const viewResult = (e, participant) => {
                 <div><h4>Gegeven antwoorden</h4><p>${given}</p></div>
                 <div><h4>Juiste antwoorden</h4><p>${correct}</p></div>
               </div>`);
+        } else if (round.type === "circuit") {
+            round.questions.forEach((q, i) => {
+                const answer = roundResult.answers[i];
+                const box = document.createElement("div");
+                box.className = "inspector-circuit";
+                box.innerHTML = `<h4>Vraag ${i + 1}: <span class="${topo.scoreClass(answer?.score ?? 0)}">` +
+                  `${answer?.score >= 1 ? "werkt (1 punt)" : "werkt niet (0 punten)"}</span></h4><p>${htmlsp(q.task)}</p>
+                  <div class="inspector-circuit-body"><div class="inspector-circuit-side">
+                  <ul class="circuit-tests">${(answer?.tests ?? []).map(t =>
+                    `<li class="${t.passed ? "passed" : "failed"}"><b>${t.passed ? "✓" : "✗"} ${htmlsp(t.name)}</b>` +
+                    `${t.passed ? "" : `<span>${htmlsp(t.message)}</span>`}</li>`).join("")}</ul></div></div>`;
+                const area = document.createElement("div");
+                area.className = "circuit-solution";
+                box.querySelector(".inspector-circuit-body").appendChild(area);
+                section.appendChild(box);
+
+                // the simulation only starts on request: a dialog with many circuits should not run them all
+                const simulation = createSimulationPanel({title: "Simulatie van deze schakeling"});
+                const start = document.createElement("button");
+                start.className = "main-bg small sim-start";
+                start.innerHTML = "<span>▶ Simuleren</span>";
+                box.querySelector(".inspector-circuit-side").appendChild(start);
+                pendingMaps.push(() => {
+                    const editor = createCircuitEditor(area, {parts: q.parts, value: answer?.given, readOnly: true});
+                    start.addEventListener("click", () => {
+                        start.replaceWith(simulation.element);
+                        simulation.run(editor, q);
+                    });
+                });
+            });
         } else if (round.type === "rekenen") {
             const sums = sumLines(round.text).map(line => {
                 try { return evaluateSum(line); } catch { return {display: line, value: NaN}; }
@@ -743,8 +1251,10 @@ const renderRoundControl = () => {
     if (live.rounds.length === 0) return;
 
     const round = live.rounds[live.currentRound];
-    document.getElementById("live-round-title").textContent =
-      `${live.currentRound + 1}/${live.rounds.length}: ${round?.title ?? ""} (${typeNames[round?.type] ?? ""})`;
+    document.getElementById("live-round-number").textContent = `${live.currentRound + 1}/${live.rounds.length}`;
+    const title = document.getElementById("live-round-title");
+    title.textContent = `${round?.title ?? ""} · ${typeNames[round?.type] ?? ""}`;
+    title.title = title.textContent;
 
     // participants who handed in count as done
     const participants = lastParticipants[0].filter(p => p);
@@ -852,7 +1362,8 @@ addEventListener("load", resizeParticipantList);
 addEventListener("resize", resizeParticipantList);
 
 addEventListener("keydown", e => {
-    if (e.key === "Escape" && dialog.current.id) dialog.close();
+    if (e.key === "Escape" && circuitModal) closeCircuitModal();
+    else if (e.key === "Escape" && dialog.current.id) dialog.close();
     else if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         if (!saveButton.disabled) saveRounds();

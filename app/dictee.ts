@@ -20,6 +20,7 @@ import { join } from "path";
 import { readFileSync, writeFile } from "fs";
 
 import { isCorrectAnswer } from "../static/js/calc.js";
+import { gradeCircuit, sanitizeCircuit, emptyCircuit } from "../static/js/circuit.js";
 import { dicteeAnswerKeys, rekenenSums, roundMaxPoints, scoreTopoClick, type Round, type RoundResult, type LatLng } from "./rounds";
 
 /** `ended`: the examiner stopped the dictee, everyone got graded, but results are kept until `closed`. */
@@ -51,6 +52,9 @@ const isLatLng = (x: any): x is LatLng =>
  */
 export const normalizeSubmission = (submission: unknown, rounds: Round[]) => rounds.map((round, r) => {
     const given = Array.isArray(submission) && Array.isArray(submission[r]) ? submission[r] as unknown[] : [];
+    if (round.type === "circuit")
+        return round.questions.map((q, i) => given[i] ? sanitizeCircuit(given[i], q.parts) : emptyCircuit());
+
     const length = round.type === "dictee" ? dicteeAnswerKeys(round.text).length :
         round.type === "rekenen" ? rekenenSums(round.text).length : round.locations.length;
 
@@ -109,6 +113,15 @@ export class Participant {
                 const answers = keys.map((key, i) => ({given: given[i] as string, correct: given[i] === key}));
                 score += answers.filter(a => a.correct).length;
                 results.push({type: "dictee", roundID: round.id, answers});
+            } else if (round.type === "circuit") {
+                if (given.length !== round.questions.length) return false;
+
+                const answers = round.questions.map((q, i) => {
+                    const circuit = sanitizeCircuit(given[i], q.parts);
+                    return {given: circuit, ...gradeCircuit(q, circuit)};
+                });
+                score += answers.reduce((sum, a) => sum + a.score, 0);
+                results.push({type: "circuit", roundID: round.id, answers});
             } else if (round.type === "rekenen") {
                 const sums = rekenenSums(round.text);
                 if (given.length !== sums.length || given.some(g => typeof g !== "string")) return false;
