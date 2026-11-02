@@ -1,10 +1,13 @@
 {
   "name": "dictee",
   "description": "Project to test the spelling capabilities of members of DJO",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "module": "app/index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "start": "bun run app/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

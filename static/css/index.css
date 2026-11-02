@@ -164,11 +164,6 @@ body::backdrop {
                 margin-bottom: 0;
                 font-size: 1.4em;
 
-                .topo-target {
-                    font-size: 1.4em;
-                    font-style: italic;
-                    text-transform: uppercase;
-                }
                 .topo-progress {
                     margin-left: auto;
                     font-size: 0.8em;
@@ -1051,7 +1046,7 @@ button.main-bg {
     top: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 2;
+    z-index: 2000;
     pointer-events: none;
     background-color: var(--overlay-background);
     backdrop-filter: blur(6px);

@@ -44,7 +44,7 @@ for (const i of [paths.resultsFile, paths.examinersFile])
 let rounds: Round[] = loadRounds();
 
 // Declarations
-const port = 3000;
+const port = 7000;
 const app = new Hono();
 const io = new Server({
     connectionStateRecovery: {maxDisconnectionDuration: 120e3}
